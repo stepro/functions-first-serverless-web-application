@@ -1,0 +1,82 @@
+#!/bin/bash
+set -e
+
+if [ -n "$AZ_COMPOSE_DEV" ]; then
+  set -x
+fi
+
+ME="$0"
+ME=$(which "$ME")
+MD=$(cd $(dirname "$ME") && pwd -P)
+ME=$(basename "$ME")
+
+fatal() {
+  echo $ME: >&2 "$@"
+  exit 1
+}
+
+az=$(which az 2>/dev/null || true)
+if [ -z "$az" ]; then
+  az.cmd --version >/dev/null 2>&1 && az=az.cmd
+fi
+if [ -z "$az" ]; then
+  fatal cannot find az
+fi
+
+OPTSTRING=f:g:l:
+LONGOPTS=file:,resource-group:,location:,subscription:
+ARGS=$(getopt -n $ME -o $OPTSTRING -l $LONGOPTS -- "$@") || exit 1
+eval set -- "$ARGS"
+while true; do
+  case "$1" in
+    -f|--compose-file)   COMPOSE_FILE="$2"; shift;;
+    -g|--resource-group) RESOURCE_GROUP="$2"; shift;;
+    -l|--location)       LOCATION="$2"; shift;;
+       --subscription)   SUBSCRIPTION="$2"; shift;;
+       --)               break;;
+  esac
+  shift
+done
+
+if [ -z "$COMPOSE_FILE"]; then
+  COMPOSE_FILE=az-compose.yaml
+fi
+if [ ! -f "$COMPOSE_FILE" ]; then
+  fatal compose file not found
+fi
+
+if [ -z "$SUBSCRIPTION" ]; then
+  SUBSCRIPTION=$($az account show --query id -o tsv)
+fi
+if [ -z "$SUBSCRIPTION" ]; then
+  fatal option is required -- subscription
+fi
+
+if [ -z "$RESOURCE_GROUP" ]; then
+  # TODO: get any default resource group from az
+  fatal option is required -- g, resource-group
+fi
+
+RESOURCE_GROUP_LOCATION=$($az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
+if [ -z "$RESOURCE_GROUP_LOCATION" ]; then
+  if [ -z "$LOCATION" ]; then
+    echo Resource group \'$RESOURCE_GROUP\' does not exist
+    fatal option is required -- l, location
+  fi
+  echo Creating resource group \'$RESOURCE_GROUP\' in location \'$LOCATION\'...
+  $az group create -n "$RESOURCE_GROUP" -l "$LOCATION" >/dev/null
+  echo Created resource group \'$RESOURCE_GROUP\' in location \'$LOCATION\'
+else
+  if [ -z "$LOCATION" ]; then
+    LOCATION="$RESOURCE_GROUP_LOCATION"
+    echo Using resource group \'$RESOURCE_GROUP\'
+  else
+    echo Using resource group \'$RESOURCE_GROUP\'
+  fi
+  echo Using default location \'$LOCATION\'
+fi
+
+hash() {
+  HASH=$(echo -n /subscriptions/$SUBSCRIPTION/resourceGroups/$RESOURCE_GROUP/$1 | sha1sum)
+  echo ${HASH::16}
+}

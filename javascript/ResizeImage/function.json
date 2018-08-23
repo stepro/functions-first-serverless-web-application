@@ -1,0 +1,20 @@
+{
+    "bindings": [
+        {
+            "name": "myBlob",
+            "type": "blobTrigger",
+            "direction": "in",
+            "path": "images/{name}",
+            "connection": "AZURE_STORAGE_CONNECTION_STRING",
+            "dataType": "binary"
+        },
+        {
+            "type": "blob",
+            "name": "thumbnail",
+            "path": "thumbnails/{name}",
+            "connection": "AZURE_STORAGE_CONNECTION_STRING",
+            "direction": "out"
+        }
+    ],
+    "disabled": false
+}

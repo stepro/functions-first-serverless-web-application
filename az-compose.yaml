@@ -1,0 +1,69 @@
+services:
+  data:
+    storage-account:
+      kind: StorageV2
+      httpsOnly: true
+      sku: Standard_LRS
+      cors:
+      - services:
+        - blob
+        methods:
+        - OPTIONS
+        - PUT
+        origins:
+        - "*"
+        allowedHeaders:
+        - "*"
+        exposedHeaders:
+        - "*"
+  images:
+    storage-container:
+      account: data
+      name: images
+      publicAccess: blob
+  thumbnails:
+    storage-container:
+      account: data
+      name: thumbnails
+      publicAccess: blob
+  functions:
+    function-app:
+      storageAccount: data
+      settings:
+        AZURE_STORAGE_CONNECTION_STRING: $(data:connectionString)
+      cors:
+      - $(webapp:primaryEndpoint)
+      # postdeploy:
+      # npm init -y
+      # npm install --save azure-storage jimp
+      functions:
+        getUploadUrl:
+          host: functions
+          name: GetUploadUrl
+          source: csharp/GetUploadUrl
+        # getUploadUrl:
+        #   host: functions
+        #   name: GetUploadUrlJS
+        #   source: javascript/GetUploadUrl
+        resizeImage:
+          host: functions
+          name: ResizeImage
+          source: csharp/ResizeImage
+        # resizeImage:
+        #   host: functions
+        #   name: ResizeImage
+        #   source: javascript/ResizeImage
+  webapp:
+    static-website:
+      host: data
+      source: www
+      build:
+        requires:
+        - node@lts
+        commands:
+        - npm install
+        - npm run generate
+        output: www/dist
+      substitutions:
+      - settings.js
+      index: index.html
