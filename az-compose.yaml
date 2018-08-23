@@ -35,6 +35,12 @@ services:
   functions:
     functionapp:
       storageAccount: data
+      authentication:
+        enabled: true
+        action: azureActiveDirectoryLogin
+        tokenStore: true
+        redirectUris:
+        - $(webapp:primaryEndpoint)
       settings:
         AZURE_STORAGE_CONNECTION_STRING: $(storage:connectionString)
         COMP_VISION_KEY: $(analyzer:key1)
