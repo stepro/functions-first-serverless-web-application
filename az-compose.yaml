@@ -21,6 +21,10 @@ services:
           publicAccess: blob
         thumbnails:
           publicAccess: blob
+  analyzer:
+    cognitiveservices-account:
+      kind: ComputerVision
+      sku: F0
   image-data:
     cosmosdb:
       databases:
@@ -29,16 +33,18 @@ services:
             images:
               throughput: 400
   functions:
-    function-app:
+    functionapp:
       storageAccount: data
       settings:
         AZURE_STORAGE_CONNECTION_STRING: $(storage:connectionString)
+        COMP_VISION_KEY: $(analyzer:key1)
+        COMP_VISION_URL: $(analyzer:url)
         COSMOSDB_CONNECTION_STRING: $(image-data:connectionString)
       cors:
       - $(webapp:primaryEndpoint)
       # postdeploy:
       # npm init -y
-      # npm install --save azure-storage jimp
+      # npm install --save axios azure-storage jimp
       functions:
         GetImages:
           source: csharp/GetImages
