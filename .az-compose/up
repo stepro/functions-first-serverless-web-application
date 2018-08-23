@@ -4,12 +4,112 @@
 # PHASE 1: CREATE
 #
 
-# analyzer
-# az cognitive services account create \
-#   -n analyzer-$(hash cognitive-services/analyzer) \
-#   -g "$RESOURCE_GROUP" \
-  
-# functions
-# image-data
-# storage
-# webapp
+NAME_analyzer=analyzer-$(hash cognitiveservices/account/analyzer@$LOCATION)
+create-analyzer() {
+  NAME="$NAME_analyzer"
+  echo Creating \'analyzer\' as cognitiveservices account \'$NAME\'...
+  STDERR_FILTER=("Microsoft will use ")
+  azq analyzer cognitiveservices account create \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    -l "$LOCATION" \
+    --kind ComputerVision \
+    --sku F0 \
+    --yes
+  echo Created \'analyzer\' as cognitiveservices account \'$NAME\'
+}
+
+NAME_backingStore=backings$(hash storage/account/backingStore@$LOCATION)
+create-backingStore() {
+  NAME="$NAME_backingStore"
+  echo Creating \'backingStore\' as storage account \'$NAME\'...
+  azq backingStore storage account create \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    -l "$LOCATION" \
+    --kind StorageV2 \
+    --https-only \
+    --sku Standard_LRS
+  azq backingStore storage container create \
+    -n images \
+    --account-name "$NAME" \
+    --public-access blob
+  azq backingStore storage container create \
+    -n thumbnails \
+    --account-name "$NAME" \
+    --public-access blob
+  echo Created \'backingStore\' as storage account \'$NAME\'
+}
+
+NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
+create-functions() {
+  NAME="$NAME_functions"
+  echo Creating \'functions\' as functionapp \'$NAME\'...
+  azq functions functionapp create \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    -c "$LOCATION" \
+    -s "$NAME_backingStore"
+  echo Created \'functions\' as functionapp \'$NAME\'
+}
+
+NAME_imageData=imagedata-$(hash cosmosdb/imageData@$LOCATION)
+create-imageData() {
+  NAME="$NAME_imageData"
+  echo Creating \'imageData\' as cosmosdb \'$NAME\'...
+  azq imageData cosmosdb create \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP"
+  EXISTS=$($az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb)
+  if [ "$EXISTS" == "false" ]; then
+    azq imageData cosmosdb database create \
+      -n "$NAME" \
+      -g "$RESOURCE_GROUP" \
+      --db-name imagesdb
+  fi
+  EXISTS=$($az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb --collection-name images)
+  if [ "$EXISTS" == "false" ]; then
+    azq imageData cosmosdb collection create \
+      -n "$NAME" \
+      -g "$RESOURCE_GROUP" \
+      --db-name imagesdb \
+      --collection-name images \
+      --throughput 400
+  fi
+  echo Created \'imageData\' as cosmosdb \'$NAME\'
+}
+
+create-analyzer &
+PID_create_analyzer=$!
+create-backingStore &
+PID_create_backingStore=$!
+create-imageData &
+PID_create_imageData=$!
+wait $PID_create_backingStore
+create-functions &
+PID_create_functions=$!
+wait
+
+#
+# PHASE 2: CONFIGURE
+#
+
+NAME_frontend=frontend-$(hash storage/account/container/\$web@$LOCATION)
+configure-frontend() {
+  NAME="$NAME_frontend"
+  echo Creating \'frontend\' as storage website in storage account \'$NAME_backingStore\'...
+  azq frontend storage blob service-properties update \
+    --account-name "$NAME_backingStore" \
+    --static-website \
+  echo Created \'frontend\' as storage website in storage account \'$NAME_backingStore\'
+}
+
+configure-backingStore() {
+  echo $az storage cors add \
+    --account-name "$NAME_backingStore"
+    --services blob \
+    --methods OPTIONS PUT \
+    --origins '*' \
+    --allowed-headers '*' \
+    --exposed-headers '*'
+}

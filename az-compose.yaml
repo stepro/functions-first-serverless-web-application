@@ -22,7 +22,7 @@ services:
         thumbnails:
           publicAccess: blob
   analyzer:
-    cognitiveservices-account:
+    cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
   imageData:
