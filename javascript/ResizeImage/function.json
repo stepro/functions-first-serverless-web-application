@@ -14,6 +14,15 @@
             "path": "thumbnails/{name}",
             "connection": "AZURE_STORAGE_CONNECTION_STRING",
             "direction": "out"
+        },
+        {
+            "type": "documentDB",
+            "name": "$return",
+            "databaseName": "imagesdb",
+            "collectionName": "images",
+            "createIfNotExists": false,
+            "connection": "image-metadata-3e673c5a6bd3ef29_DOCUMENTDB",
+            "direction": "out"
         }
     ],
     "disabled": false

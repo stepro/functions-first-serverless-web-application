@@ -13,6 +13,15 @@
             "path": "thumbnails/{name}",
             "connection": "AZURE_STORAGE_CONNECTION_STRING",
             "direction": "out"
+        },
+        {
+            "type": "documentDB",
+            "name": "$return",
+            "databaseName": "imagesdb",
+            "collectionName": "images",
+            "createIfNotExists": false,
+            "connection": "COSMOSDB_CONNECTION_STRING",
+            "direction": "out"
         }
     ],
     "disabled": false

@@ -1,5 +1,5 @@
 services:
-  data:
+  storage:
     storage-account:
       kind: StorageV2
       httpsOnly: true
@@ -16,46 +16,45 @@ services:
         - "*"
         exposedHeaders:
         - "*"
-  images:
-    storage-container:
-      account: data
-      name: images
-      publicAccess: blob
-  thumbnails:
-    storage-container:
-      account: data
-      name: thumbnails
-      publicAccess: blob
+      containers:
+        images:
+          publicAccess: blob
+        thumbnails:
+          publicAccess: blob
+  image-data:
+    cosmosdb:
+      databases:
+        imagesdb:
+          collections:
+            images:
+              throughput: 400
   functions:
     function-app:
       storageAccount: data
       settings:
-        AZURE_STORAGE_CONNECTION_STRING: $(data:connectionString)
+        AZURE_STORAGE_CONNECTION_STRING: $(storage:connectionString)
+        COSMOSDB_CONNECTION_STRING: $(image-data:connectionString)
       cors:
       - $(webapp:primaryEndpoint)
       # postdeploy:
       # npm init -y
       # npm install --save azure-storage jimp
       functions:
-        getUploadUrl:
-          host: functions
-          name: GetUploadUrl
+        GetImages:
+          source: csharp/GetImages
+        GetUploadUrl:
           source: csharp/GetUploadUrl
-        # getUploadUrl:
-        #   host: functions
-        #   name: GetUploadUrlJS
-        #   source: javascript/GetUploadUrl
-        resizeImage:
-          host: functions
-          name: ResizeImage
+        ResizeImage:
           source: csharp/ResizeImage
-        # resizeImage:
-        #   host: functions
-        #   name: ResizeImage
+        # GetImages:
+        #   source: javascript/GetImages
+        # GetUploadUrl:
+        #   source: javascript/GetUploadUrl
+        # ResizeImage:
         #   source: javascript/ResizeImage
   webapp:
     static-website:
-      host: data
+      host: storage
       source: www
       build:
         requires:
