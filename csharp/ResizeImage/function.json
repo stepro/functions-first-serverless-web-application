@@ -20,7 +20,7 @@
             "databaseName": "imagesdb",
             "collectionName": "images",
             "createIfNotExists": false,
-            "connection": "COSMOSDB_CONNECTION_STRING",
+            "connection": "IMAGEDATA_CONNECTION_STRING",
             "direction": "out"
         }
     ],

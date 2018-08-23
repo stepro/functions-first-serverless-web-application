@@ -23,14 +23,14 @@ public static async Task<object> Run(Stream myBlob, string name, Stream thumbnai
 
 var request = new HttpRequestMessage() {
     RequestUri = new Uri(
-        System.Environment.GetEnvironmentVariable("COMP_VISION_URL", EnvironmentVariableTarget.Process) + 
+        System.Environment.GetEnvironmentVariable("ANALYZER_URL", EnvironmentVariableTarget.Process) + 
         "/analyze?visualFeatures=Description&amp;language=en"),
         Method = HttpMethod.Post,
         Content = new StreamContent(myBlob)
     };
     request.Headers.Add(
         "Ocp-Apim-Subscription-Key", 
-        System.Environment.GetEnvironmentVariable("COMP_VISION_KEY", EnvironmentVariableTarget.Process));
+        System.Environment.GetEnvironmentVariable("ANALYZER_KEY", EnvironmentVariableTarget.Process));
     request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
     var response = await httpClient.SendAsync(request);

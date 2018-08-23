@@ -53,8 +53,8 @@ export default {
         logout: window.auth.logout,
         username: null
       }
-      data.apiBaseUrl = window.apiBaseUrl
-      data.blobBaseUrl = window.blobBaseUrl
+      data.apiBaseUrl = 'https://' + window.settings.functions.defaultHostName
+      data.blobBaseUrl = window.settings.backingStore.primaryEndpoints.blob
     }
     return data
   },

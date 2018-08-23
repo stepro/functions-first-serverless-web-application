@@ -45,13 +45,16 @@ services:
         AZURE_STORAGE_CONNECTION_STRING: $(backendStore:connectionString)
       cors:
       - $(frontend:primaryEndpoint)
+      postDeploy:
+      - npm init -y
+      - npm install --save axios azure-storage jimp
       functions:
         GetImages:
-          source: csharp/GetImages
+          source: javascript/GetImages
         GetUploadUrl:
-          source: csharp/GetUploadUrl
+          source: javascript/GetUploadUrl
         ResizeImage:
-          source: csharp/ResizeImage
+          source: javascript/ResizeImage
   frontend:
     storageWebsite:
       host: backingStore

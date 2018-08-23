@@ -14,7 +14,7 @@ module.exports = function (context, myBlob) {
                     context.log('calling cog svc');
                     axios.post(process.env.COMP_VISION_URL + '/analyze?visualFeatures=Description&language=en', myBlob, {
                         headers: {
-                            'Ocp-Apim-Subscription-Key': process.env.COMP_VISION_KEY,
+                            'Ocp-Apim-Subscription-Key': process.env.ANALYZER_KEY,
                             'Content-Type': 'application/octet-stream'
                         }
                     }).then(response => {
