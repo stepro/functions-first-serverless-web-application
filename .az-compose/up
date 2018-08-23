@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#
+# PHASE 1: CREATE
+#
+
+# analyzer
+# az cognitive services account create \
+#   -n analyzer-$(hash cognitive-services/analyzer) \
+#   -g "$RESOURCE_GROUP" \
+  
+# functions
+# image-data
+# storage
+# webapp
