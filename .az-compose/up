@@ -65,6 +65,8 @@ create-backingStore() {
     --kind StorageV2 \
     --https-only \
     --sku Standard_LRS
+  azq backingStore storage cors clear \
+    --account-name "$NAME"
   azq backingStore storage cors add \
     --account-name "$NAME" \
     --services b \
