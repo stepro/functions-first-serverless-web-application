@@ -10,22 +10,22 @@ services:
         origins: ["*"]
         allowedHeaders: ["*"]
         exposedHeaders: ["*"]
-      containers:
-      - name: images
-        publicAccess: blob
-      - name: thumbnails
-        publicAccess: blob
+  images:
+    storageContainer:
+      publicAccess: blob
+  thumbnails:
+    storageContainer:
+      publicAccess: blob
+  imageDocuments:
+    cosmosdbCollection:
+      name: images
+      database:
+      - name: imagesdb
+      throughput: 400
   analyzer:
     cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
-  imageData:
-    cosmosdb:
-      databases:
-      - name: imagesdb
-        collections:
-        - name: images
-          throughput: 400
   functions:
     functionapp:
       storageAccount: backingStore
@@ -38,29 +38,29 @@ services:
       cors:
         allowedOrigins:
         - $(frontend:primaryEndpoint)
-      settings:
-        AZURE_STORAGE_CONNECTION_STRING: $(backendStore:connectionString)
       postDeploy:
       - npm init -y
       - npm install --save axios azure-storage jimp
-      functions:
-      - name: GetImages
-        source: javascript/GetImages
-      - name: GetUploadUrl
-        source: javascript/GetUploadUrl
-      - name: ResizeImage
-        source: javascript/ResizeImage
+  GetImages:
+    requires: imageDocuments
+    function:
+      app: functions
+      source: javascript/GetImages
+  GetUploadUrl:
+    requires: images
+    function:
+      app: functions
+      source: javascript/GetUploadUrl
+  ResizeImage:
+    requires: [backingStore, imageDocuments, analyzer]
+    function:
+      app: functions
+      source: javascript/ResizeImage
   frontend:
+    requires: functions
     staticWebsite:
       account: backingStore
       source: www
-      build:
-        requires:
-        - node >= lts
-        commands:
-        - npm install
-        - npm run generate
-        output: www/dist
       settings:
         authEnabled: true
       index: index.html

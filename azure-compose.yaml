@@ -10,22 +10,22 @@ services:
         origins: ["*"]
         allowedHeaders: ["*"]
         exposedHeaders: ["*"]
-      containers:
-      - name: images
-        publicAccess: blob
-      - name: thumbnails
-        publicAccess: blob
+  images:
+    storageContainer:
+      publicAccess: blob
+  thumbnails:
+    storageContainer:
+      publicAccess: blob
+  imageDocuments:
+    cosmosdbCollection:
+      name: images
+      database:
+      - name: imagesdb
+      throughput: 400
   analyzer:
     cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
-  imageData:
-    cosmosdb:
-      databases:
-      - name: imagesdb
-        collections:
-        - name: images
-          throughput: 400
   functions:
     functionapp:
       storageAccount: backingStore
@@ -38,26 +38,26 @@ services:
       cors:
         allowedOrigins:
         - $(frontend:primaryEndpoint)
-      settings:
-        AZURE_STORAGE_CONNECTION_STRING: $(backendStore:connectionString)
-      functions:
-      - name: GetImages
-        source: csharp/GetImages
-      - name: GetUploadUrl
-        source: csharp/GetUploadUrl
-      - name: ResizeImage
-        source: csharp/ResizeImage
+  GetImages:
+    requires: imageDocuments
+    function:
+      app: functions
+      source: csharp/GetImages
+  GetUploadUrl:
+    requires: images
+    function:
+      app: functions
+      source: csharp/GetUploadUrl
+  ResizeImage:
+    requires: [backingStore, imageDocuments, analyzer]
+    function:
+      app: functions
+      source: csharp/ResizeImage
   frontend:
+    requires: functions
     staticWebsite:
       account: backingStore
       source: www
-      build:
-        requires:
-        - node >= lts
-        commands:
-        - npm install
-        - npm run generate
-        output: www/dist
       settings:
         authEnabled: true
       index: index.html

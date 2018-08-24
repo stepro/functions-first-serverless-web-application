@@ -7,9 +7,17 @@
             "authLevel": "anonymous",
             "methods": [
                 "get",
-                "post",
-                "options"
+                "post"
             ]
+        },
+        {
+            "name": "documents",
+            "type": "documentDB",
+            "direction": "in",
+            "connection": "IMAGEDOCUMENTS_CONNECTION_STRING",
+            "databaseName": "imagesdb",
+            "collectionName": "images",
+            "sqlQuery": "select * from c order by c._ts desc"
         },
         {
             "name": "$return",

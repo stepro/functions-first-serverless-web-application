@@ -179,10 +179,14 @@ imageData-connectionString() {
 }
 
 create-analyzer & PID_create_analyzer=$!
+sleep 0.1
 create-backingStore & PID_create_backingStore=$!
+sleep 0.1
 create-imageData & PID_create_imageData=$!
+sleep 0.1
 wait $PID_create_backingStore
 create-frontend & PID_create_frontend=$!
+sleep 0.1
 create-functions & PID_create_functions=$!
 wait
 
@@ -218,5 +222,6 @@ configure-functions() {
 }
 
 configure-frontend & PID_configure_frontend=$!
+sleep 0.1
 configure-functions & PID_configure_functions=$!
 wait

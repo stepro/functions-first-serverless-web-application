@@ -4,24 +4,24 @@
             "name": "myBlob",
             "type": "blobTrigger",
             "direction": "in",
-            "path": "images/{name}",
-            "connection": "AZURE_STORAGE_CONNECTION_STRING"
+            "connection": "IMAGES_CONNECTION_STRING",
+            "path": "images/{name}"
         },
         {
-            "type": "blob",
             "name": "thumbnail",
-            "path": "thumbnails/{name}",
-            "connection": "AZURE_STORAGE_CONNECTION_STRING",
-            "direction": "out"
+            "type": "blob",
+            "direction": "out",
+            "connection": "THUMBNAILS_CONNECTION_STRING",
+            "path": "thumbnails/{name}"
         },
         {
-            "type": "documentDB",
             "name": "$return",
+            "type": "documentDB",
+            "direction": "out",
+            "connection": "IMAGEDOCUMENTS_CONNECTION_STRING",
             "databaseName": "imagesdb",
             "collectionName": "images",
-            "createIfNotExists": false,
-            "connection": "IMAGEDATA_CONNECTION_STRING",
-            "direction": "out"
+            "createIfNotExists": false
         }
     ],
     "disabled": false
