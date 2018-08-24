@@ -35,7 +35,7 @@ create-analyzer() {
 }
 analyzer-url() {
   if [ -z "$VAL_analyzer_url" ]; then
-    VAL_analyzer_url=$($az cognitiveservices account show \
+    VAL_analyzer_url=$(az cognitiveservices account show \
       -n "$NAME_analyzer" \
       -g "$RESOURCE_GROUP" \
       --query endpoint \
@@ -45,7 +45,7 @@ analyzer-url() {
 }
 analyzer-key() {
   if [ -z "$VAL_analyzer_key" ]; then
-    VAL_analyzer_key=$($az cognitiveservices account keys list \
+    VAL_analyzer_key=$(az cognitiveservices account keys list \
       -n "$NAME_analyzer" \
       -g "$RESOURCE_GROUP" \
       --query key1 \
@@ -84,7 +84,7 @@ create-backingStore() {
 }
 backingStore-connectionString() {
   if [ -z "$VAL_backingStore_connectionString" ]; then
-    VAL_backingStore_connectionString=$($az storage account show-connection-string \
+    VAL_backingStore_connectionString=$(az storage account show-connection-string \
       -n "$NAME_backingStore" \
       -g "$RESOURCE_GROUP" \
       --query connectionString \
@@ -102,7 +102,7 @@ create-frontend() {
 }
 frontend-primaryEndpoint() {
   if [ -z "$VAL_frontend_primaryEndpoint" ]; then
-    VAL_frontend_primaryEndpoint=$($az storage account show \
+    VAL_frontend_primaryEndpoint=$(az storage account show \
       -n "$NAME_backingStore" \
       -g "$RESOURCE_GROUP" \
       --query primaryEndpoints.web \
@@ -124,7 +124,7 @@ create-functions() {
 }
 functions-defaultHostName() {
   if [ -z "$VAL_functions_defaultHostName" ]; then
-    VAL_functions_defaultHostName=$($az functionapp show \
+    VAL_functions_defaultHostName=$(az functionapp show \
       -n "$NAME_functions" \
       -g "$RESOURCE_GROUP" \
       --query defaultHostName \
@@ -140,14 +140,14 @@ create-imageData() {
   azq imageData cosmosdb create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP"
-  EXISTS=$($az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb -o tsv)
+  EXISTS=$(az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb -o tsv)
   if [ "$EXISTS" == "false" ]; then
     azq imageData cosmosdb database create \
       -n "$NAME" \
       -g "$RESOURCE_GROUP" \
       --db-name imagesdb
   fi
-  EXISTS=$($az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb --collection-name images -o tsv)
+  EXISTS=$(az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb --collection-name images -o tsv)
   if [ "$EXISTS" == "false" ]; then
     azq imageData cosmosdb collection create \
       -n "$NAME" \
@@ -160,12 +160,12 @@ create-imageData() {
 }
 imageData-connectionString() {
   if [ -z "$VAL_imageData_connectionString" ]; then
-    ENDPOINT=$($az cosmosdb show \
+    ENDPOINT=$(az cosmosdb show \
       -n "$NAME_imageData" \
       -g "$RESOURCE_GROUP" \
       --query documentEndpoint \
       -o tsv)
-    KEY=$($az cosmosdb list-keys \
+    KEY=$(az cosmosdb list-keys \
       -n "$NAME_imageData" \
       -g "$RESOURCE_GROUP" \
       --query primaryMasterKey \
