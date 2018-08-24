@@ -5,33 +5,27 @@ services:
       httpsOnly: true
       sku: Standard_LRS
       cors:
-      - services:
-        - blob
-        methods:
-        - OPTIONS
-        - PUT
-        origins:
-        - "*"
-        allowedHeaders:
-        - "*"
-        exposedHeaders:
-        - "*"
+      - services: [blob]
+        methods: [OPTIONS, PUT]
+        origins: ["*"]
+        allowedHeaders: ["*"]
+        exposedHeaders: ["*"]
       containers:
-        images:
-          publicAccess: blob
-        thumbnails:
-          publicAccess: blob
+      - name: images
+        publicAccess: blob
+      - name: thumbnails
+        publicAccess: blob
   analyzer:
-    cognitiveservices-account:
+    cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
   imageData:
     cosmosdb:
       databases:
-        imagesdb:
-          collections:
-            images:
-              throughput: 400
+      - name: imagesdb
+        collections:
+        - name: images
+          throughput: 400
   functions:
     functionapp:
       storageAccount: backingStore
@@ -41,23 +35,24 @@ services:
         tokenStore: true
         redirectUris:
         - $(frontend:primaryEndpoint)
+      cors:
+        allowedOrigins:
+        - $(frontend:primaryEndpoint)
       settings:
         AZURE_STORAGE_CONNECTION_STRING: $(backendStore:connectionString)
-      cors:
-      - $(frontend:primaryEndpoint)
       postDeploy:
       - npm init -y
       - npm install --save axios azure-storage jimp
       functions:
-        GetImages:
-          source: javascript/GetImages
-        GetUploadUrl:
-          source: javascript/GetUploadUrl
-        ResizeImage:
-          source: javascript/ResizeImage
+      - name: GetImages
+        source: javascript/GetImages
+      - name: GetUploadUrl
+        source: javascript/GetUploadUrl
+      - name: ResizeImage
+        source: javascript/ResizeImage
   frontend:
-    storageWebsite:
-      host: backingStore
+    staticWebsite:
+      account: backingStore
       source: www
       build:
         requires:
@@ -67,5 +62,5 @@ services:
         - npm run generate
         output: www/dist
       settings:
-        authEnabled:  true
+        authEnabled: true
       index: index.html

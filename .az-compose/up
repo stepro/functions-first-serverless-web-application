@@ -1,6 +1,21 @@
 #!/bin/bash
 
 #
+# PHASE 0: BUILD
+#
+
+build-frontend() {
+  echo Building \'frontend\' in \'www\'...
+  cd www
+  npm install
+  npm run generate
+  echo Built \'frontend\' in \'www\'
+  cd ..
+}
+
+build-frontend
+
+#
 # PHASE 1: CREATE
 #
 
@@ -18,6 +33,26 @@ create-analyzer() {
     --yes
   echo Created \'analyzer\' as cognitiveservices account \'$NAME\'
 }
+analyzer-url() {
+  if [ -z "$VAL_analyzer_url" ]; then
+    VAL_analyzer_url=$($az cognitiveservices account show \
+      -n "$NAME_analyzer" \
+      -g "$RESOURCE_GROUP" \
+      --query endpoint \
+      -o tsv)
+  fi
+  echo $VAL_analyzer_url
+}
+analyzer-key() {
+  if [ -z "$VAL_analyzer_key" ]; then
+    VAL_analyzer_key=$($az cognitiveservices account keys list \
+      -n "$NAME_analyzer" \
+      -g "$RESOURCE_GROUP" \
+      --query key1 \
+      -o tsv)
+  fi
+  echo $VAL_analyzer_key
+}
 
 NAME_backingStore=backings$(hash storage/account/backingStore@$LOCATION)
 create-backingStore() {
@@ -30,6 +65,13 @@ create-backingStore() {
     --kind StorageV2 \
     --https-only \
     --sku Standard_LRS
+  azq backingStore storage cors add \
+    --account-name "$NAME" \
+    --services b \
+    --methods OPTIONS PUT \
+    --origins '*' \
+    --allowed-headers '*' \
+    --exposed-headers '*'
   azq backingStore storage container create \
     -n images \
     --account-name "$NAME" \
@@ -39,6 +81,34 @@ create-backingStore() {
     --account-name "$NAME" \
     --public-access blob
   echo Created \'backingStore\' as storage account \'$NAME\'
+}
+backingStore-connectionString() {
+  if [ -z "$VAL_backingStore_connectionString" ]; then
+    VAL_backingStore_connectionString=$($az storage account show-connection-string \
+      -n "$NAME_backingStore" \
+      -g "$RESOURCE_GROUP" \
+      --query connectionString \
+      -o tsv 2>/dev/null)
+  fi
+  echo $VAL_backingStore_connectionString
+}
+
+create-frontend() {
+  echo Creating \'frontend\' as static website in storage account \'$NAME_backingStore\'...
+  azq frontend storage blob service-properties update \
+    --account-name "$NAME_backingStore" \
+    --static-website
+  echo Created \'frontend\' as static website in storage account \'$NAME_backingStore\'
+}
+frontend-primaryEndpoint() {
+  if [ -z "$VAL_frontend_primaryEndpoint" ]; then
+    VAL_frontend_primaryEndpoint=$($az storage account show \
+      -n "$NAME_backingStore" \
+      -g "$RESOURCE_GROUP" \
+      --query primaryEndpoints.web \
+      -o tsv 2>/dev/null)
+  fi
+  echo $VAL_frontend_primaryEndpoint
 }
 
 NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
@@ -52,6 +122,16 @@ create-functions() {
     -s "$NAME_backingStore"
   echo Created \'functions\' as functionapp \'$NAME\'
 }
+functions-defaultHostName() {
+  if [ -z "$VAL_functions_defaultHostName" ]; then
+    VAL_functions_defaultHostName=$($az functionapp show \
+      -n "$NAME_functions" \
+      -g "$RESOURCE_GROUP" \
+      --query defaultHostName \
+      -o tsv)
+  fi
+  echo $VAL_functions_defaultHostName
+}
 
 NAME_imageData=imagedata-$(hash cosmosdb/imageData@$LOCATION)
 create-imageData() {
@@ -60,14 +140,14 @@ create-imageData() {
   azq imageData cosmosdb create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP"
-  EXISTS=$($az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb)
+  EXISTS=$($az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb -o tsv)
   if [ "$EXISTS" == "false" ]; then
     azq imageData cosmosdb database create \
       -n "$NAME" \
       -g "$RESOURCE_GROUP" \
       --db-name imagesdb
   fi
-  EXISTS=$($az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb --collection-name images)
+  EXISTS=$($az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name imagesdb --collection-name images -o tsv)
   if [ "$EXISTS" == "false" ]; then
     azq imageData cosmosdb collection create \
       -n "$NAME" \
@@ -78,38 +158,62 @@ create-imageData() {
   fi
   echo Created \'imageData\' as cosmosdb \'$NAME\'
 }
+imageData-connectionString() {
+  if [ -z "$VAL_imageData_connectionString" ]; then
+    ENDPOINT=$($az cosmosdb show \
+      -n "$NAME_imageData" \
+      -g "$RESOURCE_GROUP" \
+      --query documentEndpoint \
+      -o tsv)
+    KEY=$($az cosmosdb list-keys \
+      -n "$NAME_imageData" \
+      -g "$RESOURCE_GROUP" \
+      --query primaryMasterKey \
+      -o tsv)
+    VAL_imageData_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;"
+  fi
+  echo $VAL_imageData_connectionString
+}
 
-create-analyzer &
-PID_create_analyzer=$!
-create-backingStore &
-PID_create_backingStore=$!
-create-imageData &
-PID_create_imageData=$!
+create-analyzer & PID_create_analyzer=$!
+create-backingStore & PID_create_backingStore=$!
+create-imageData & PID_create_imageData=$!
 wait $PID_create_backingStore
-create-functions &
-PID_create_functions=$!
+create-frontend & PID_create_frontend=$!
+create-functions & PID_create_functions=$!
 wait
 
 #
 # PHASE 2: CONFIGURE
 #
 
-NAME_frontend=frontend-$(hash storage/account/container/\$web@$LOCATION)
 configure-frontend() {
   NAME="$NAME_frontend"
-  echo Creating \'frontend\' as storage website in storage account \'$NAME_backingStore\'...
-  azq frontend storage blob service-properties update \
-    --account-name "$NAME_backingStore" \
-    --static-website \
-  echo Created \'frontend\' as storage website in storage account \'$NAME_backingStore\'
+  echo Configuring \'frontend\' static website in storage account \'$NAME_backingStore\'...
+  echo 'window.settings = {' > www/dist/settings.js
+  echo '  analyzer: { url: "'$(analyzer-url)'", key: "'$(analyzer-key)'" },' >> www/dist/settings.js
+  echo '  backingStore: { connectionString: "'$(backingStore-connectionString)'" },' >> www/dist/settings.js
+  echo '  functions: { defaultHostName: "'$(functions-defaultHostName)'" },' >> www/dist/settings.js
+  echo '  imageData: { connectionString: "'$(imageData-connectionString)'" }' >> www/dist/settings.js
+  echo '  authEnabled: true' >> www/dist/settings.js
+  echo "}" >> www/dist/settings.js
+  echo Configured \'frontend\' static website in storage account \'$NAME_backingStore\'
 }
 
-configure-backingStore() {
-  echo $az storage cors add \
-    --account-name "$NAME_backingStore"
-    --services blob \
-    --methods OPTIONS PUT \
-    --origins '*' \
-    --allowed-headers '*' \
-    --exposed-headers '*'
+configure-functions() {
+  NAME="$NAME_functions"
+  echo Configuring \'functions\' functionapp \'$NAME\'...
+  # TODO: configure authorization
+  # TODO: add CORS allowed origins
+  azq functions functionapp config appsettings set -n "$NAME" -g "$RESOURCE_GROUP" --settings \
+    "ANALYZER_URL=$(analyzer-url)" \
+    "ANALYZER_KEY=$(analyzer-key)" \
+    "BACKINGSTORE_CONNECTIONSTRING=$(backingStore-connectionString)" \
+    "FRONTEND_PRIMARYENDPOINT=$(frontend-primaryEndpoint)" \
+    "IMAGEDATA_CONNECTIONSTRING=$(imageData-connectionString)"
+  echo Configured \'functions\' functionapp \'$NAME\'
 }
+
+configure-frontend & PID_configure_frontend=$!
+configure-functions & PID_configure_functions=$!
+wait
