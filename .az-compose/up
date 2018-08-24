@@ -13,7 +13,7 @@ build-frontend() {
   cd ..
 }
 
-build-frontend
+# build-frontend
 
 #
 # PHASE 1: CREATE
