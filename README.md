@@ -8,4 +8,4 @@ Code for first serverless web application tutorial (coming soon!)
 ## Azure Compose
 - `source .az-compose/install`
 - `az-compose up -g myResourceGroup -l myLocation`
-- `az-compose down -g myResourceGroup`
+- `az-compose down -g myResourceGroup --delete-group`
