@@ -44,11 +44,11 @@ fi
 
 START_TIME=$(date +%s)
 
-OPTSTRING=f:g:
-LONGOPTS=file:,subscription:,resource-group:
+OPTSTRING=f:g:l:
+LONGOPTS=compose-file:,subscription:,resource-group:,location:
 if [ "$COMMAND" == "up" ]; then
-  OPTSTRING=${OPTSTRING}l:e:
-  LONGOPTS=$LONGOPTS,location:,env:,env-file:
+  OPTSTRING=${OPTSTRING}e:
+  LONGOPTS=$LONGOPTS,env:,env-file:
 elif [ "$COMMAND" == "down" ]; then
   OPTSTRING=${OPTSTRING}dy
   LONGOPTS=$LONGOPTS,delete-group,no-wait,yes
@@ -94,23 +94,21 @@ if [ -z "$RESOURCE_GROUP" ]; then
 fi
 
 RG_LOCATION=$(az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
+if [ -z "$LOCATION" ]; then
+  LOCATION="$RG_LOCATION"
+fi
 
-if [ "$COMMAND" == "up" ]; then
-  if [ -z "$RG_LOCATION" ]; then
-    if [ -z "$LOCATION" ]; then
-      echo Resource group \'$RESOURCE_GROUP\' does not exist
-      fatal required option: l, location
-    fi
+if [ -z "$RG_LOCATION" ]; then
+  if [ -z "$LOCATION" ]; then
+    echo Resource group \'$RESOURCE_GROUP\' does not exist
+    fatal required option: l, location
+  fi
+  if [ "$COMMAND" == "up" ]; then
     echo Creating resource group \'$RESOURCE_GROUP\' in \'$LOCATION\'...
     az group create -n "$RESOURCE_GROUP" -l "$LOCATION" > /dev/null
-  else
-    if [ -z "$LOCATION" ]; then
-      LOCATION="$RG_LOCATION"
-    fi
-    echo Using resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
   fi
-elif [ "$COMMAND" == "down" ]; then
-  LOCATION="$RG_LOCATION"
+else
+  echo Using resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
 fi
 
 if [ "$COMMAND" == "down" -a -z "$YES" ]; then
@@ -119,7 +117,7 @@ if [ "$COMMAND" == "down" -a -z "$YES" ]; then
           "$ANSWER" != "Y" -a "$ANSWER" != "y" -a \
           "$ANSWER" != "N" -a "$ANSWER" != "n" ]; do
     echo -n Are you sure you want to compose down the services in \'$COMPOSE_FILE\'
-    if [ -n "$DELETE_GROUP" ]; then
+    if [ -n "$DELETE_GROUP" -a -n "$RG_LOCATION" ]; then
       echo -n " "and delete resource group \'$RESOURCE_GROUP\'
     fi
     echo -n ? \(y/N\):" "
@@ -174,19 +172,9 @@ if [ ! -f ".az-compose/$COMMAND" ]; then
 fi
 source .az-compose/$COMMAND
 
-if [ "$COMMAND" == "down" -a -n "$DELETE_GROUP" ]; then
-  RG_EXISTS=$(az group exists -n "$RESOURCE_GROUP" -o tsv)
-  if [ "$RG_EXISTS" == "false" ]; then
-    echo Resource group \'$RESOURCE_GROUP\' does not exist
-  else
-    echo Deleting resource group \'$RESOURCE_GROUP\'...
-    az group delete -n "$RESOURCE_GROUP" $NO_WAIT --yes
-    if [ -n "$NO_WAIT" ]; then
-      echo Resource group \'$RESOURCE_GROUP\' is being deleted
-    else
-      echo Deleted resource group \'$RESOURCE_GROUP\'
-    fi
-  fi
+if [ "$COMMAND" == "down" -a -n "$DELETE_GROUP" -a -n "$RG_LOCATION" ]; then
+  echo Deleting resource group \'$RESOURCE_GROUP\'...
+  az group delete -n "$RESOURCE_GROUP" $NO_WAIT --yes
 fi
 
 elapsed-time() {

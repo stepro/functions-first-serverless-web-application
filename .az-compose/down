@@ -1,7 +1,10 @@
 #!/bin/bash
 
 NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
-APP_ID=$(az ad app list --display-name "$NAME_functions" -o json | jq -r '.[].appId')
-if [ -n "$APP_ID" ]; then
+APP=$(az ad app list --identifier-uri "https://$NAME_functions.azurewebsites.net" --query '[].{a:appId,d:displayName}' -o tsv)
+if [ -n "$APP" ]; then
+  APP_ID=$(echo $APP | cut -d' ' -f1)
+  DISPLAY_NAME=$(echo $APP | cut -d' ' -f2-)
+  echo Deleting Azure Active Directory application \'$DISPLAY_NAME\'...
   az ad app delete --id $APP_ID
 fi
