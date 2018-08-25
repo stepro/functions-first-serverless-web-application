@@ -6,6 +6,6 @@ Code for first serverless web application tutorial (coming soon!)
 - `./build`
 
 ## Azure Compose
-- `.az-compose/install`
+- `source .az-compose/install`
 - `az-compose up -g myResourceGroup -l myLocation`
 - `az-compose down -g myResourceGroup`
