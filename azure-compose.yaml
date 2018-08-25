@@ -12,9 +12,11 @@ services:
         exposedHeaders: ["*"]
   images:
     storageContainer:
+      account: backingStore
       publicAccess: blob
   thumbnails:
     storageContainer:
+      account: backingStore
       publicAccess: blob
   imageDocuments:
     cosmosdbCollection:
@@ -54,10 +56,13 @@ services:
       app: functions
       source: csharp/ResizeImage
   frontend:
-    requires: functions
+    requires: [backingStore, functions]
     staticWebsite:
       account: backingStore
-      source: www
+      source: www/dist
       settings:
         authEnabled: true
       index: index.html
+endpoints:
+  frontend:
+  - primaryEndpoint

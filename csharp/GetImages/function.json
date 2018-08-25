@@ -14,7 +14,7 @@
             "name": "documents",
             "type": "documentDB",
             "direction": "in",
-            "connection": "IMAGEDOCUMENTS_CONNECTION_STRING",
+            "connection": "IMAGEDOCUMENTS_DATABASE_ACCOUNT_CONNECTIONSTRING",
             "databaseName": "imagesdb",
             "collectionName": "images",
             "sqlQuery": "select * from c order by c._ts desc"
