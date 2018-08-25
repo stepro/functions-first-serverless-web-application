@@ -57,7 +57,10 @@ services:
       app: functions
       source: csharp/ResizeImage
   frontend:
-    requires: [backingStore, functions]
+    requires:
+      backingStore:
+        primaryEndpoints: blob
+      functions:
     staticWebsite:
       account: backingStore
       source: www/dist
@@ -65,5 +68,4 @@ services:
         authEnabled: true
       index: index.html
 endpoints:
-  frontend:
-  - primaryEndpoint
+  frontend: $(frontend:primaryEndpoint)

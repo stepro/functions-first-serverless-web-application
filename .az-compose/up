@@ -9,7 +9,6 @@ build-frontend() {
   cd www
   npm install
   npm run generate
-  echo Built \'frontend\' in \'www\'
   cd ..
 }
 
@@ -31,7 +30,6 @@ create-analyzer() {
     --kind ComputerVision \
     --sku F0 \
     --yes
-  echo Created \'analyzer\' as cognitiveservices account \'$NAME\'
 }
 
 NAME_backingStore=backings$(hash storage/account/backingStore@$LOCATION)
@@ -63,7 +61,6 @@ create-backingStore() {
     -n thumbnails \
     --account-name "$NAME" \
     --public-access blob
-  echo Created \'backingStore\' as storage account \'$NAME\'
 }
 
 create-frontend() {
@@ -71,7 +68,6 @@ create-frontend() {
   azq frontend storage blob service-properties update \
     --account-name "$NAME_backingStore" \
     --static-website
-  echo Created \'frontend\' as static website in storage account \'$NAME_backingStore\'
 }
 
 NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
@@ -83,7 +79,6 @@ create-functions() {
     -g "$RESOURCE_GROUP" \
     -c "$LOCATION" \
     -s "$NAME_backingStore"
-  echo Created \'functions\' as functionapp \'$NAME\'
 }
 
 NAME_imageDocuments_database_account=imagedocuments-$(hash cosmosdb/imageDocuments@$LOCATION)
@@ -111,7 +106,6 @@ create-imageDocuments() {
       --collection-name "$NAME_imageDocuments" \
       --throughput 400
   fi
-  echo Created \'imageDocuments\' as cosmosdb collection \'$NAME_imageDocuments\' in database \'$NAME_imageDocuments_database\' account \'$NAME\'
 }
 
 create-analyzer & PID_create_analyzer=$!
@@ -259,8 +253,6 @@ readenv $VALUES_DIR/images
 readenv $VALUES_DIR/ResizeImage
 readenv $VALUES_DIR/thumbnails
 
-echo Resolved all service properties
-
 #
 # PHASE 3: CONFIGURE
 #
@@ -347,7 +339,6 @@ wait
 
 bind-frontend() {
   echo Binding \'frontend\' static website to \'functions\' functionapp...
-  # TODO: reference to backingStore, but only want some of the properties...
   echo 'window.settings.backingStore = { primaryEndpoints: { blob: "'$VAL_backingStore_primaryEndpoints_blob'" } }' >> www/dist/settings.js
   echo 'window.settings.functions = { defaultHostName: "'$VAL_functions_defaultHostName'" }' >> www/dist/settings.js
 }
@@ -413,6 +404,6 @@ push-frontend
 push-functions
 
 echo
-echo frontend:
-echo "  "primaryEndpoint: $VAL_frontend_primaryEndpoint
+echo Available endpoints:
+echo   frontend: $VAL_frontend_primaryEndpoint
 echo
