@@ -4,7 +4,7 @@ module.exports = function (context, req) {
     const filename = req.query.filename;
     const container = 'images';
 
-    const blobService = azure.createBlobService();
+    const blobService = azure.createBlobService(process.env.IMAGES_ACCOUNT_CONNECTIONSTRING);
 
     const currentDate = new Date();
     const startDate = new Date(currentDate.getTime() - 60 * 1000);
