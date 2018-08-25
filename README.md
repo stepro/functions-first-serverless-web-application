@@ -1,6 +1,6 @@
 # Build your first serverless web app
 
-Code for first serverless web application tutorial (coming soon!)
+Code for first serverless web application tutorial
 
 ## How to Build
 - `./build`
