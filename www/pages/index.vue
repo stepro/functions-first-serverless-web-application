@@ -47,7 +47,7 @@ export default {
     }
     if (process.browser) {
       data.auth = {
-        enabled: window.authEnabled,
+        enabled: window.settings.authEnabled,
         token: window.auth.token,
         loginUrl: window.auth.loginUrl,
         logout: window.auth.logout,

@@ -268,13 +268,63 @@ echo Resolved all service properties
 configure-frontend() {
   echo Configuring \'frontend\' static website...
   echo 'window.settings = {}' > www/dist/settings.js
-  # TODO: enable auth
-  echo 'window.settings.authEnabled = false' >> www/dist/settings.js
+  echo 'window.settings.authEnabled = true' >> www/dist/settings.js
 }
 
 configure-functions() {
   echo Configuring \'functions\' functionapp...
-  # TODO: configure auth
+  APP_ID=$(az ad app list --display-name "$NAME_functions" -o json | jq -r '.[].appId')
+  if [ -z "$APP_ID" ]; then
+    APP_ID=$(az ad app create \
+      --display-name "First Serverless Web Application" \
+      --homepage "https://$VAL_functions_defaultHostName" \
+      --identifier-uris "https://$VAL_functions_defaultHostName" \
+      --reply-urls "https://$VAL_functions_defaultHostName/.auth/login/aad/callback" \
+      --required-resource-accesses '[{
+        "resourceAppId": "00000002-0000-0000-c000-000000000000",
+        "resourceAccess": [
+          {
+            "id": "311a71cc-e848-46a1-bdf8-97ff7156d8e6",
+            "type": "Scope"
+          }
+        ]
+      }]' \
+      --query appId \
+      -o tsv)
+  fi
+  FUNCTIONAPP_AUTH_ENABLE=$(mktemp)
+  trap 'rm -f $FUNCTIONAPP_AUTH_ENABLE' EXIT
+  cat << EOF > $FUNCTIONAPP_AUTH_ENABLE
+.properties.enabled = true |
+.properties.runtimeVersion = "1.0.0" |
+.properties.unauthenticatedClientAction = "RedirectToLoginPage" |
+.properties.tokenStoreEnabled = true |
+.properties.allowedExternalRedirectUrls = [ "$VAL_frontend_primaryEndpoint" ] |
+.properties.defaultProvider = "AzureActiveDirectory" |
+.properties.clientId = "$APP_ID" |
+.properties.issuer = "https://sts.windows.net/$(az account show --query tenantId -o tsv)/" |
+.properties.allowedAudiences = [ "https://$VAL_functions_defaultHostName/.auth/login/aad/callback" ] |
+.properties.isAadAutoProvisioned = true
+EOF
+  az resource invoke-action \
+    -g "$RESOURCE_GROUP" \
+    --namespace Microsoft.Web \
+    --parent "sites/$NAME_functions" \
+    --resource-type config \
+    -n authsettings \
+    --action list \
+    --api-version 2018-02-01 \
+    -o tsv | \
+  jq "$(cat $FUNCTIONAPP_AUTH_ENABLE)" | \
+  az resource create \
+    -g "$RESOURCE_GROUP" \
+    --namespace Microsoft.Web \
+    --parent "sites/$NAME_functions" \
+    --resource-type config \
+    -n authsettings \
+    --api-version 2018-02-01 \
+    --is-full-object \
+    --properties @/dev/stdin > /dev/null
   azq functions resource update \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \

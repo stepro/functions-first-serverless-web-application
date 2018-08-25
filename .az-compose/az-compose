@@ -93,8 +93,9 @@ if [ -z "$RESOURCE_GROUP" ]; then
   fatal required option: g, resource-group
 fi
 
+RG_LOCATION=$(az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
+
 if [ "$COMMAND" == "up" ]; then
-  RG_LOCATION=$(az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
   if [ -z "$RG_LOCATION" ]; then
     if [ -z "$LOCATION" ]; then
       echo Resource group \'$RESOURCE_GROUP\' does not exist
@@ -108,6 +109,8 @@ if [ "$COMMAND" == "up" ]; then
     fi
     echo Using resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
   fi
+elif [ "$COMMAND" == "down" ]; then
+  LOCATION="$RG_LOCATION"
 fi
 
 if [ "$COMMAND" == "down" -a -z "$YES" ]; then

@@ -1,2 +1,7 @@
 #!/bin/bash
 
+NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
+APP_ID=$(az ad app list --display-name "$NAME_functions" -o json | jq -r '.[].appId')
+if [ -n "$APP_ID" ]; then
+  az ad app delete --id $APP_ID
+fi
