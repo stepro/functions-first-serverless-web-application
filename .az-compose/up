@@ -1,5 +1,10 @@
 #!/bin/bash
 
+LANGUAGE=csharp
+if [ "$COMPOSE_FILE" == "azure-compose.js.yaml" ]; then
+  LANGUAGE=javascript
+fi
+
 #
 # PHASE 0: BUILD
 #
@@ -388,9 +393,9 @@ push-functions() {
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
   trap 'rm -rf $PACKAGE_DIR; rm -f $ZIP_FILE' EXIT
-  cp -R "csharp/GetImages" $PACKAGE_DIR
-  cp -R "csharp/GetUploadUrl" $PACKAGE_DIR
-  cp -R "csharp/ResizeImage" $PACKAGE_DIR
+  cp -R "$LANGUAGE/GetImages" $PACKAGE_DIR
+  cp -R "$LANGUAGE/GetUploadUrl" $PACKAGE_DIR
+  cp -R "$LANGUAGE/ResizeImage" $PACKAGE_DIR
   (cd $PACKAGE_DIR && zip -r $ZIP_FILE .)
   az functionapp deployment source config-zip \
     -n "$NAME_functions" \
