@@ -295,17 +295,6 @@ wait
 # PHASE 4: BIND
 #
 
-# analyzer*
-# backingStore*
-# frontend*
-# functions*
-# GetImages
-# GetUploadUrl
-# imageDocuments
-# images
-# ResizeImage
-# thumbnails
-
 bind-frontend() {
   echo Binding \'frontend\' static website to \'functions\' functionapp...
   # TODO: reference to backingStore, but only want some of the properties...
