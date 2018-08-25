@@ -1,0 +1,8 @@
+#!/bin/bash
+mkdir -p ~/bin
+cp ($dirname $0)/az-compose ~/bin
+if [ -z "$(which az-compose)" ]; then
+  echo >> ~/.bashrc
+  echo 'PATH="$HOME/bin:$HOME/.local/bin:$PATH"' >> ~/.bashrc
+  export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+fi
