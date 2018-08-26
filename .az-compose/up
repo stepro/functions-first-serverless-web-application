@@ -372,10 +372,10 @@ push-frontend() {
 
 push-functions() {
   echo Deploying functions to \'functions\' functionapp...
-  # TODO: include build step for javascript case
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
   trap 'rm -rf $PACKAGE_DIR; rm -f $ZIP_FILE' EXIT
+  # TODO: include build step for javascript case
   cp -R "$LANGUAGE/GetImages" $PACKAGE_DIR
   cp -R "$LANGUAGE/GetUploadUrl" $PACKAGE_DIR
   cp -R "$LANGUAGE/ResizeImage" $PACKAGE_DIR
