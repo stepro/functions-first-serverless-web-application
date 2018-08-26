@@ -4,21 +4,21 @@
             "name": "myBlob",
             "type": "blobTrigger",
             "direction": "in",
-            "connection": "IMAGES_CONNECTION_STRING",
+            "connection": "BACKINGSTORE_CONNECTIONSTRING",
             "path": "images/{name}"
         },
         {
             "name": "thumbnail",
             "type": "blob",
             "direction": "out",
-            "connection": "THUMBNAILS_CONNECTION_STRING",
+            "connection": "BACKINGSTORE_CONNECTIONSTRING",
             "path": "thumbnails/{name}"
         },
         {
             "name": "$return",
             "type": "documentDB",
             "direction": "out",
-            "connection": "IMAGEDOCUMENTS_CONNECTION_STRING",
+            "connection": "IMAGEDOCUMENTS_DATABASE_ACCOUNT_CONNECTIONSTRING",
             "databaseName": "imagesdb",
             "collectionName": "images",
             "createIfNotExists": false
