@@ -130,11 +130,12 @@ wait
 # PHASE 2: RESOLVE
 #
 
+echo Resolving service properties...
+
 VALUES_DIR=$(mktemp -d)
 trap 'rm -rf $VALUES_DIR' EXIT
 
 resolve-analyzer() {
-  echo Resolving \'analyzer\' properties...
   echo VAL_analyzer_url=$(az cognitiveservices account show \
     -n "$NAME_analyzer" \
     -g "$RESOURCE_GROUP" \
@@ -148,7 +149,6 @@ resolve-analyzer() {
 }
 
 resolve-backingStore() {
-  echo Resolving \'backingStore\' properties...
   echo VAL_backingStore_primaryEndpoints_blob=$(az storage account show \
     -n "$NAME_backingStore" \
     -g "$RESOURCE_GROUP" \
@@ -162,7 +162,6 @@ resolve-backingStore() {
 }
 
 resolve-frontend() {
-  echo Resolving \'frontend\' properties...
   echo VAL_frontend_primaryEndpoint=$(az storage account show \
     -n "$NAME_backingStore" \
     -g "$RESOURCE_GROUP" \
@@ -171,7 +170,6 @@ resolve-frontend() {
 }
 
 resolve-functions() {
-  echo Resolving \'functions\' properties...
   echo VAL_functions_defaultHostName=$(az functionapp show \
     -n "$NAME_functions" \
     -g "$RESOURCE_GROUP" \
@@ -180,19 +178,16 @@ resolve-functions() {
 }
 
 resolve-GetImages() {
-  echo Resolving \'GetImages\' properties...
   echo VAL_GetImages_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/GetImages
   echo VAL_GetImages_name=GetImages >> $VALUES_DIR/GetImages
 }
 
 resolve-GetUploadUrl() {
-  echo Resolving \'GetUploadUrl\' properties...
   echo VAL_GetUploadUrl_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/GetUploadUrl
   echo VAL_GetUploadUrl_name=GetUploadUrl >> $VALUES_DIR/GetUploadUrl
 }
 
 resolve-imageDocuments() {
-  echo Resolving \'imageDocuments\' properties...
   ENDPOINT=$(az cosmosdb show \
     -n "$NAME_imageDocuments_database_account" \
     -g "$RESOURCE_GROUP" \
@@ -209,45 +204,32 @@ resolve-imageDocuments() {
 }
 
 resolve-images() {
-  echo Resolving \'images\' properties...
   echo VAL_images_account_connectionString=$VAL_backingStore_connectionString >> $VALUES_DIR/images
   echo VAL_images_name=images >> $VALUES_DIR/images
 }
 
 resolve-ResizeImage() {
-  echo Resolving \'ResizeImage\' properties...
   echo VAL_ResizeImage_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/ResizeImage
   echo VAL_ResizeImage_name=ResizeImage >> $VALUES_DIR/ResizeImage
 }
 
 resolve-thumbnails() {
-  echo Resolving \'thumbnails\' properties...
   echo VAL_thumbnails_account_connectionString=$VAL_backingStore_connectionString >> $VALUES_DIR/thumbnails
   echo VAL_thumbnails_name=thumbnails >> $VALUES_DIR/thumbnails
 }
 
 resolve-analyzer & PID_resolve_analyzer=$!
-sleep 0.1
 resolve-backingStore & PID_resolve_backingStore=$!
-sleep 0.1
 resolve-frontend & PID_resolve_frontend=$!
-sleep 0.1
 resolve-functions & PID_resolve_functions=$!
-sleep 0.1
 resolve-imageDocuments & PID_resolve_imageDocuments=$!
-sleep 0.1
 wait $PID_resolve_backingStore && readenv $VALUES_DIR/backingStore
 resolve-images & PID_resolve_images=$!
-sleep 0.1
 resolve-thumbnails & PID_resolve_thumbnails=$!
-sleep 0.1
 wait $PID_resolve_functions && readenv $VALUES_DIR/functions
 resolve-GetImages & PID_resolve_GetImages=$!
-sleep 0.1
 resolve-GetUploadUrl & PID_resolve_GetUploadUrl=$!
-sleep 0.1
 resolve-ResizeImage & PID_resolve_ResizeImage=$!
-sleep 0.1
 wait
 readenv $VALUES_DIR/analyzer
 readenv $VALUES_DIR/frontend
