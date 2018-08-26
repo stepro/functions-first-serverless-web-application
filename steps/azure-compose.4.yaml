@@ -1,0 +1,65 @@
+services:
+  backingStore:
+    storageAccount:
+      kind: StorageV2
+      httpsOnly: true
+      sku: Standard_LRS
+      cors:
+      - services: [blob]
+        methods: [OPTIONS, PUT]
+        origins: ["*"]
+        allowedHeaders: ["*"]
+        exposedHeaders: ["*"]
+  images:
+    storageContainer:
+      account: backingStore
+      publicAccess: blob
+  thumbnails:
+    storageContainer:
+      account: backingStore
+      publicAccess: blob
+  imageDocuments:
+    cosmosdbCollection:
+      name: images
+      database:
+      - name: imagesdb
+      throughput: 400
+  functions:
+    functionapp:
+      storageAccount: backingStore
+      authentication:
+        enabled: true
+        action: azureActiveDirectoryLogin
+        appDisplayName: First Serverless Web Application
+        tokenStore: true
+        redirectUris:
+        - $(frontend:primaryEndpoint)
+      cors:
+        allowedOrigins:
+        - $(frontend:primaryEndpoint)
+  GetImages:
+    requires: imageDocuments
+    function:
+      app: functions
+      source: csharp/GetImages
+  GetUploadUrl:
+    requires: images
+    function:
+      app: functions
+      source: csharp/GetUploadUrl
+  ResizeImage:
+    requires: [backingStore, imageDocuments]
+    function:
+      app: functions
+      source: csharp/ResizeImage
+  frontend:
+    requires:
+      backingStore:
+        primaryEndpoints: blob
+      functions: true
+    staticWebsite:
+      account: backingStore
+      content: www/dist
+      index: index.html
+endpoints:
+  frontend: $(frontend:primaryEndpoint)

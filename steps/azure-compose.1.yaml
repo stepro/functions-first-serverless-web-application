@@ -1,0 +1,11 @@
+services:
+  frontend:
+    staticWebsite:
+      account:
+        kind: StorageV2
+        httpsOnly: true
+        sku: Standard_LRS
+      content: www/dist
+      index: index.html
+endpoints:
+  frontend: $(frontend:primaryEndpoint)
