@@ -20,7 +20,7 @@
             "sqlQuery": "select * from c order by c._ts desc"
         },
         {
-            "name": "$return",
+            "name": "res",
             "type": "http",
             "direction": "out"
         }

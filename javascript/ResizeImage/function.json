@@ -5,7 +5,8 @@
             "type": "blobTrigger",
             "direction": "in",
             "connection": "BACKINGSTORE_CONNECTIONSTRING",
-            "path": "images/{name}"
+            "path": "images/{name}",
+            "dataType": "binary"
         },
         {
             "name": "thumbnail",
