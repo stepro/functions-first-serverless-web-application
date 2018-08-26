@@ -63,10 +63,10 @@ services:
     requires:
       backingStore:
         primaryEndpoints: blob
-      functions:
+      functions: true
     staticWebsite:
       account: backingStore
-      source: www/dist
+      content: www/dist
       settings:
         authEnabled: true
       index: index.html
