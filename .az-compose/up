@@ -252,7 +252,7 @@ configure-frontend() {
 
 configure-functions() {
   echo Configuring \'functions\' functionapp...
-  APP_ID=$(az ad app list --display-name "$NAME_functions" -o json | jq -r '.[].appId')
+  APP_ID=$(az ad app list --identifier-uri "https://$NAME_functions.azurewebsites.net" --query '[].appId' -o tsv)
   if [ -z "$APP_ID" ]; then
     APP_ID=$(az ad app create \
       --display-name "First Serverless Web Application" \
