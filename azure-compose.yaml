@@ -1,22 +1,9 @@
 services:
-  backingStore:
-    storageAccount:
-      kind: StorageV2
-      httpsOnly: true
-      sku: Standard_LRS
-      cors:
-      - services: [blob]
-        methods: [OPTIONS, PUT]
-        origins: ["*"]
-        allowedHeaders: ["*"]
-        exposedHeaders: ["*"]
   images:
     storageContainer:
-      account: backingStore
       publicAccess: blob
   thumbnails:
     storageContainer:
-      account: backingStore
       publicAccess: blob
   imageDocuments:
     cosmosdbCollection:
@@ -30,16 +17,12 @@ services:
       sku: F0
   functions:
     functionapp:
-      storageAccount: backingStore
       authentication:
         enabled: true
         action: azureActiveDirectoryLogin
         appDisplayName: First Serverless Web Application
         tokenStore: true
         redirectUris:
-        - $(frontend:primaryEndpoint)
-      cors:
-        allowedOrigins:
         - $(frontend:primaryEndpoint)
   GetImages:
     requires: imageDocuments
@@ -61,7 +44,6 @@ services:
       images: primaryEndpoint
       functions: true
     staticWebsite:
-      account: backingStore
       content: www/dist
       settings:
         authEnabled: true

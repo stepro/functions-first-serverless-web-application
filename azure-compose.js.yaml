@@ -1,22 +1,9 @@
 services:
-  backingStore:
-    storageAccount:
-      kind: StorageV2
-      httpsOnly: true
-      sku: Standard_LRS
-      cors:
-      - services: [blob]
-        methods: [OPTIONS, PUT]
-        origins: ["*"]
-        allowedHeaders: ["*"]
-        exposedHeaders: ["*"]
   images:
     storageContainer:
-      account: backingStore
       publicAccess: blob
   thumbnails:
     storageContainer:
-      account: backingStore
       publicAccess: blob
   imageDocuments:
     cosmosdbCollection:
@@ -30,7 +17,6 @@ services:
       sku: F0
   functions:
     functionapp:
-      storageAccount: backingStore
       authentication:
         enabled: true
         action: azureActiveDirectoryLogin
@@ -38,12 +24,7 @@ services:
         tokenStore: true
         redirectUris:
         - $(frontend:primaryEndpoint)
-      cors:
-        allowedOrigins:
-        - $(frontend:primaryEndpoint)
-      postDeploy:
-      - npm init -y
-      - npm install --save axios azure-storage jimp
+      source: javascript/site
   GetImages:
     requires: imageDocuments
     function:
@@ -61,11 +42,9 @@ services:
       source: javascript/ResizeImage
   frontend:
     requires:
-      backingStore:
-        primaryEndpoints: blob
+      images: primaryEndpoint
       functions: true
     staticWebsite:
-      account: backingStore
       content: www/dist
       settings:
         authEnabled: true
