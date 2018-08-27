@@ -15,7 +15,7 @@ services:
     cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
-  functions:
+  apiHost:
     functionapp:
       authentication:
         enabled: true
@@ -27,20 +27,20 @@ services:
   GetImages:
     requires: imageDocuments!
     function:
-      app: functions
+      app: apiHost
       source: csharp/GetImages
   GetUploadUrl:
     requires: images!
     function:
-      app: functions
+      app: apiHost
       source: csharp/GetUploadUrl
   ResizeImage:
     requires: [images!, thumbnails!, imageDocuments!, analyzer!]
     function:
-      app: functions
+      app: apiHost
       source: csharp/ResizeImage
   frontend:
-    requires: [images, functions]
+    requires: [images, apiHost]
     staticWebsite:
       content: www/dist
       settings:
