@@ -176,18 +176,8 @@ readenv() {
   IFS=$' \r\n'
 }
 
-if [ ! -f ".az-compose/$COMMAND" ]; then
-  fatal missing $COMMAND implementation
-fi
-source .az-compose/$COMMAND
-
-if [ "$COMMAND" == "down" -a -n "$DELETE_GROUP" -a -n "$RG_LOCATION" ]; then
-  echo Deleting resource group \'$RESOURCE_GROUP\'...
-  az group delete -n "$RESOURCE_GROUP" $NO_WAIT --yes
-fi
-
-elapsed-time() {
-  ELAPSED=$(($(date +%s) - $START_TIME))
+since() {
+  ELAPSED=$(($(date +%s) - $1))
   if [ $ELAPSED -eq 0 ]; then
     echo \<1s
   elif [ $ELAPSED -lt 60 ]; then
@@ -203,4 +193,14 @@ elapsed-time() {
   fi
 }
 
-echo Compose completed in $(elapsed-time)
+if [ ! -f ".az-compose/$COMMAND" ]; then
+  fatal missing $COMMAND implementation
+fi
+source .az-compose/$COMMAND
+
+if [ "$COMMAND" == "down" -a -n "$DELETE_GROUP" -a -n "$RG_LOCATION" ]; then
+  echo Deleting resource group \'$RESOURCE_GROUP\'...
+  az group delete -n "$RESOURCE_GROUP" $NO_WAIT --yes
+fi
+
+echo Compose completed in $(since $START_TIME)

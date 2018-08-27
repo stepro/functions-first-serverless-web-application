@@ -4,7 +4,7 @@
             "name": "myBlob",
             "type": "blobTrigger",
             "direction": "in",
-            "connection": "BACKINGSTORE_CONNECTIONSTRING",
+            "connection": "IMAGES_ACCOUNT_CONNECTION_STRING",
             "path": "images/{name}",
             "dataType": "binary"
         },
@@ -12,14 +12,14 @@
             "name": "thumbnail",
             "type": "blob",
             "direction": "out",
-            "connection": "BACKINGSTORE_CONNECTIONSTRING",
+            "connection": "THUMBNAILS_ACCOUNT_CONNECTION_STRING",
             "path": "thumbnails/{name}"
         },
         {
             "name": "$return",
             "type": "documentDB",
             "direction": "out",
-            "connection": "IMAGEDOCUMENTS_DATABASE_ACCOUNT_CONNECTIONSTRING",
+            "connection": "IMAGE_DOCUMENTS_DATABASE_ACCOUNT_CONNECTION_STRING",
             "databaseName": "imagesdb",
             "collectionName": "images",
             "createIfNotExists": false

@@ -53,7 +53,7 @@ export default {
         logout: window.auth.logout,
         username: null
       }
-      data.apiBaseUrl = 'https://' + window.settings.functions.defaultHostName
+      data.apiBaseUrl = 'https://' + window.settings.default.functionapp.defaultHostName
       data.blobBaseUrl = window.settings.images.primaryEndpoint
     }
     return data

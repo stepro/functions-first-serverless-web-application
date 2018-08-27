@@ -10,7 +10,7 @@ public static async Task<object> Run(HttpRequestMessage req, TraceWriter log)
         .Value;
 
     CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
-        System.Environment.GetEnvironmentVariable("IMAGES_ACCOUNT_CONNECTIONSTRING", EnvironmentVariableTarget.Process));
+        System.Environment.GetEnvironmentVariable("IMAGES_ACCOUNT_CONNECTION_STRING", EnvironmentVariableTarget.Process));
     var client = storageAccount.CreateCloudBlobClient();
     var container = client.GetContainerReference("images");
     await container.CreateIfNotExistsAsync();

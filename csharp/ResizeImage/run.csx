@@ -15,18 +15,19 @@ public static async Task<object> Run(Stream myBlob, string name, Stream thumbnai
         Height = 200,
         Mode = FitMode.Crop,
         Scale = ScaleMode.Both
-    };ImageBuilder.Current.Build(new ImageJob(myBlob, thumbnail, instructions)
-{
-    DisposeSourceObject = false,
-    ResetSourceStream = true
-});
+    };
+    ImageBuilder.Current.Build(new ImageJob(myBlob, thumbnail, instructions)
+    {
+        DisposeSourceObject = false,
+        ResetSourceStream = true
+    });
 
-var request = new HttpRequestMessage() {
-    RequestUri = new Uri(
-        System.Environment.GetEnvironmentVariable("ANALYZER_URL", EnvironmentVariableTarget.Process) + 
-        "/analyze?visualFeatures=Description&amp;language=en"),
-        Method = HttpMethod.Post,
-        Content = new StreamContent(myBlob)
+    var request = new HttpRequestMessage() {
+        RequestUri = new Uri(
+            System.Environment.GetEnvironmentVariable("ANALYZER_URL", EnvironmentVariableTarget.Process) + 
+            "/analyze?visualFeatures=Description&amp;language=en"),
+            Method = HttpMethod.Post,
+            Content = new StreamContent(myBlob)
     };
     request.Headers.Add(
         "Ocp-Apim-Subscription-Key", 
