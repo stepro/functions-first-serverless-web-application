@@ -23,95 +23,210 @@ build-frontend() {
 # PHASE 1: CREATE
 #
 
+PROPS=$(mktemp -d)
+trap 'rm -rf $PROPS' EXIT
+
 NAME_analyzer=analyzer-$(hash cognitiveservices/account/analyzer@$LOCATION)
 create-analyzer() {
   NAME="$NAME_analyzer"
-  echo Creating \'analyzer\' as cognitiveservices account \'$NAME\'...
+  echo Creating \'analyzer\' as cognitive services account \'$NAME\'...
   STDERR_FILTER=("Microsoft will use ")
-  azq analyzer cognitiveservices account create \
+  echo PROP_analyzer_url=$(azp analyzer cognitiveservices account create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -l "$LOCATION" \
     --kind ComputerVision \
     --sku F0 \
-    --yes
+    --yes \
+    --query endpoint \
+    -o tsv) >> $PROPS/analyzer
+  echo PROP_analyzer_key=$(azp analyzer cognitiveservices account keys list \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    --query key1 \
+    -o tsv) >> $PROPS/analyzer
+  echo Created \'analyzer\' as cognitive services account \'$NAME\'
 }
 
 NAME_backingStore=backings$(hash storage/account/backingStore@$LOCATION)
 create-backingStore() {
   NAME="$NAME_backingStore"
   echo Creating \'backingStore\' as storage account \'$NAME\'...
-  azq backingStore storage account create \
+  azp -q backingStore storage account create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -l "$LOCATION" \
     --kind StorageV2 \
     --https-only \
     --sku Standard_LRS
-  azq backingStore storage cors clear \
+  azp -q backingStore storage cors clear \
     --account-name "$NAME" \
     --services b
-  azq backingStore storage cors add \
+  azp -q backingStore storage cors add \
     --account-name "$NAME" \
     --services b \
     --methods OPTIONS PUT \
     --origins '*' \
     --allowed-headers '*' \
     --exposed-headers '*'
-  azq backingStore storage container create \
-    -n images \
-    --account-name "$NAME" \
-    --public-access blob
-  azq backingStore storage container create \
-    -n thumbnails \
-    --account-name "$NAME" \
-    --public-access blob
+  PRIMARY_BLOB_ENDPOINT=$(azp backingStore storage account show \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    --query primaryEndpoints.blob \
+    -o tsv)
+  echo PROP_backingStore_primaryEndpoints_blob=$(echo $PRIMARY_BLOB_ENDPOINT | sed 's/\/$//') >> $PROPS/backingStore
+  echo PROP_backingStore_connectionString=$(azp backingStore storage account show-connection-string \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    --query connectionString \
+    -o tsv) >> $PROPS/backingStore
+  echo Created \'backingStore\' as storage account \'$NAME\'
 }
 
 create-frontend() {
   echo Creating \'frontend\' as static website in storage account \'$NAME_backingStore\'...
-  azq frontend storage blob service-properties update \
+  azp -q frontend storage blob service-properties update \
     --account-name "$NAME_backingStore" \
     --static-website
+  PRIMARY_ENDPOINT=$(azp frontend storage account show \
+    -n "$NAME_backingStore" \
+    -g "$RESOURCE_GROUP" \
+    --query primaryEndpoints.web \
+    -o tsv)
+  echo PROP_frontend_primaryEndpoint=$(echo $PRIMARY_ENDPOINT | sed 's/\/$//') >> $PROPS/frontend
+  echo PROP_frontend_account_connectionString="$PROP_backingStore_connectionString" >> $PROPS/frontend
+  echo Created \'frontend\' as static website in storage account \'$NAME_backingStore\'
 }
 
 NAME_functions=functions-$(hash functionapp/functions@$LOCATION)
 create-functions() {
   NAME="$NAME_functions"
-  echo Creating \'functions\' as functionapp \'$NAME\'...
-  azq functions functionapp create \
+  echo Creating \'functions\' as function app \'$NAME\'...
+  echo PROP_functions_defaultHostName=$(azp functions functionapp create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -c "$LOCATION" \
-    -s "$NAME_backingStore"
+    -s "$NAME_backingStore" \
+    --query defaultHostName \
+    -o tsv) >> $PROPS/functions
+  echo Created \'functions\' as function app \'$NAME\'
 }
 
-NAME_imageDocuments_database_account=imagedocuments-$(hash cosmosdb/imageDocuments@$LOCATION)
-NAME_imageDocuments_database=imagesdb
+NAME_GetImages=GetImages
+create-GetImages() {
+  NAME="$NAME_GetImages"
+  echo Creating \'GetImages\' as function \'$NAME\' in function app \'$NAME_functions\'...
+  echo PROP_GetImages_app_defaultHostName="$PROP_functions_defaultHostName" >> $PROPS/GetImages
+  echo PROP_GetImages_name="$NAME" >> $PROPS/GetImages
+  echo Created \'GetImages\' as function \'$NAME\' in function app \'$NAME_functions\'
+}
+
+NAME_GetUploadUrl=GetUploadUrl
+create-GetUploadUrl() {
+  NAME="$NAME_GetUploadUrl"
+  echo Creating \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_functions\'...
+  echo PROP_GetUploadUrl_app_defaultHostName="$PROP_functions_defaultHostName" >> $PROPS/GetUploadUrl
+  echo PROP_GetUploadUrl_name="$NAME" >> $PROPS/GetUploadUrl
+  echo Created \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_functions\'
+}
+
 NAME_imageDocuments=images
+NAME_imageDocuments_database=imagesdb
+NAME_imageDocuments_database_account=imagedocuments-$(hash cosmosdb/imageDocuments@$LOCATION)
 create-imageDocuments() {
-  NAME="$NAME_imageDocuments_database_account"
-  echo Creating \'imageDocuments\' as cosmosdb collection \'$NAME_imageDocuments\' in database \'$NAME_imageDocuments_database\' account \'$NAME\'...
-  azq imageDocuments cosmosdb create \
-    -n "$NAME" \
-    -g "$RESOURCE_GROUP"
-  EXISTS=$(az cosmosdb database exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name "$NAME_imageDocuments_database" -o tsv)
+  NAME="$NAME_imageDocuments"
+  NAME_database="$NAME_imageDocuments_database"
+  NAME_database_account="$NAME_imageDocuments_database_account"
+  echo Creating \'imageDocuments\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'...
+  ENDPOINT=$(azp imageDocuments cosmosdb create \
+    -n "$NAME_database_account" \
+    -g "$RESOURCE_GROUP" \
+    --query documentEndpoint \
+    -o tsv)
+  KEY=$(azp imageDocuments cosmosdb list-keys \
+    -n "$NAME_database_account" \
+    -g "$RESOURCE_GROUP" \
+    --query primaryMasterKey \
+    -o tsv)
+  echo PROP_imageDocuments_database_account_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/imageDocuments
+  EXISTS=$(azp imageDocuments cosmosdb database exists \
+    -n "$NAME_database_account" \
+    -g "$RESOURCE_GROUP" \
+    --db-name "$NAME_database" \
+    -o tsv)
   if [ "$EXISTS" == "false" ]; then
-    azq imageDocuments cosmosdb database create \
-      -n "$NAME" \
+    azp -q imageDocuments cosmosdb database create \
+      -n "$NAME_database_account" \
       -g "$RESOURCE_GROUP" \
-      --db-name "$NAME_imageDocuments_database"
+      --db-name "$NAME_database"
   fi
-  EXISTS=$(az cosmosdb collection exists -n "$NAME" -g "$RESOURCE_GROUP" --db-name "$NAME_imageDocuments_database" --collection-name "$NAME_imageDocuments" -o tsv)
+  echo PROP_imageDocuments_database_name="$NAME_database" >> $PROPS/imageDocuments
+  EXISTS=$(azp imageDocuments cosmosdb collection exists \
+    -n "$NAME_database_account" \
+    -g "$RESOURCE_GROUP" \
+    --db-name "$NAME_database" \
+    --collection-name "$NAME" \
+    -o tsv)
   if [ "$EXISTS" == "false" ]; then
-    azq imageDocuments cosmosdb collection create \
-      -n "$NAME" \
+    azp -q imageDocuments cosmosdb collection create \
+      -n "$NAME_database_account" \
       -g "$RESOURCE_GROUP" \
-      --db-name "$NAME_imageDocuments_database" \
-      --collection-name "$NAME_imageDocuments" \
+      --db-name "$NAME_database" \
+      --collection-name "$NAME" \
       --throughput 400
   fi
+  echo PROP_imageDocuments_name="$NAME" >> $PROPS/imageDocuments
+  echo Created \'imageDocuments\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'
 }
+
+NAME_images=images
+create-images() {
+  NAME="$NAME_images"
+  echo Creating \'images\' as container \'$NAME\' in storage account \'$NAME_backingStore\'...
+  azp -q images storage container create \
+    -n "$NAME" \
+    --account-name "$NAME_backingStore" \
+    --public-access blob
+  echo PROP_images_primaryEndpoint="$PROP_backingStore_primaryEndpoints_blob" >> $PROPS/images
+  echo PROP_images_account_connectionString="$PROP_backingStore_connectionString" >> $PROPS/images
+  echo PROP_images_name="$NAME_images" >> $PROPS/images
+  echo Created \'images\' as container \'$NAME\' in storage account \'$NAME_backingStore\'
+}
+
+NAME_ResizeImage=ResizeImage
+create-ResizeImage() {
+  NAME="$NAME_ResizeImage"
+  echo Creating \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_functions\'...
+  echo PROP_ResizeImage_app_defaultHostName="$PROP_functions_defaultHostName" >> $PROPS/ResizeImage
+  echo PROP_ResizeImage_name="$NAME" >> $PROPS/ResizeImage
+  echo Created \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_functions\'
+}
+
+NAME_thumbnails=thumbnails
+create-thumbnails() {
+  NAME="$NAME_thumbnails"
+  echo Creating \'thumbnails\' as container \'$NAME\' in storage account \'$NAME_backingStore\'...
+  azp -q thumbnails storage container create \
+    -n "$NAME" \
+    --account-name "$NAME_backingStore" \
+    --public-access blob
+  echo PROP_thumbnails_primaryEndpoint="$PROP_backingStore_primaryEndpoints_blob" >> $PROPS/thumbnails
+  echo PROP_thumbnails_account_connectionString="$PROP_backingStore_connectionString" >> $PROPS/thumbnails
+  echo PROP_thumbnails_name="$NAME_thumbnails" >> $PROPS/thumbnails
+  echo Created \'thumbnails\' as container \'$NAME\' in storage account \'$NAME_backingStore\'
+}
+
+# Creation dependencies:
+# - analyzer
+# - backingStore
+# - frontend <- backingStore
+# - functions <- backingStore
+# - GetImages <- functions
+# - GetUploadUrl <- functions
+# - imageDocuments
+# - images <- backingStore
+# - ResizeImage <- functions
+# - thumbnails <- backingStore
 
 create-analyzer & PID_create_analyzer=$!
 sleep 0.1
@@ -119,146 +234,54 @@ create-backingStore & PID_create_backingStore=$!
 sleep 0.1
 create-imageDocuments & PID_create_imageDocuments=$!
 sleep 0.1
-wait $PID_create_backingStore
+wait $PID_create_backingStore && readenv $PROPS/backingStore
 create-frontend & PID_create_frontend=$!
 sleep 0.1
 create-functions & PID_create_functions=$!
 sleep 0.1
+create-images & PID_create_images=$!
+sleep 0.1
+create-thumbnails & PID_create_thumbnails=$!
+sleep 0.1
+wait $PID_create_functions && readenv $PROPS/functions
+create-GetImages & PID_create_GetImages=$!
+sleep 0.1
+create-GetUploadUrl & PID_create_GetUploadUrl=$!
+sleep 0.1
+create-ResizeImage & PID_create_ResizeImage=$!
 wait
+readenv $PROPS/analyzer
+readenv $PROPS/frontend
+readenv $PROPS/GetImages
+readenv $PROPS/GetUploadUrl
+readenv $PROPS/imageDocuments
+readenv $PROPS/images
+readenv $PROPS/ResizeImage
+readenv $PROPS/thumbnails
 
 #
-# PHASE 2: RESOLVE
-#
-
-echo Resolving service properties...
-
-VALUES_DIR=$(mktemp -d)
-trap 'rm -rf $VALUES_DIR' EXIT
-
-resolve-analyzer() {
-  echo VAL_analyzer_url=$(az cognitiveservices account show \
-    -n "$NAME_analyzer" \
-    -g "$RESOURCE_GROUP" \
-    --query endpoint \
-    -o tsv) >> $VALUES_DIR/analyzer
-  echo VAL_analyzer_key=$(az cognitiveservices account keys list \
-    -n "$NAME_analyzer" \
-    -g "$RESOURCE_GROUP" \
-    --query key1 \
-    -o tsv) >> $VALUES_DIR/analyzer
-}
-
-resolve-backingStore() {
-  echo VAL_backingStore_primaryEndpoints_blob=$(az storage account show \
-    -n "$NAME_backingStore" \
-    -g "$RESOURCE_GROUP" \
-    --query primaryEndpoints.blob \
-    -o tsv 2>/dev/null | sed 's/\/$//') >> $VALUES_DIR/backingStore
-  echo VAL_backingStore_connectionString=$(az storage account show-connection-string \
-    -n "$NAME_backingStore" \
-    -g "$RESOURCE_GROUP" \
-    --query connectionString \
-    -o tsv 2>/dev/null) >> $VALUES_DIR/backingStore
-}
-
-resolve-frontend() {
-  echo VAL_frontend_primaryEndpoint=$(az storage account show \
-    -n "$NAME_backingStore" \
-    -g "$RESOURCE_GROUP" \
-    --query primaryEndpoints.web \
-    -o tsv 2>/dev/null | sed 's/\/$//') >> $VALUES_DIR/frontend
-}
-
-resolve-functions() {
-  echo VAL_functions_defaultHostName=$(az functionapp show \
-    -n "$NAME_functions" \
-    -g "$RESOURCE_GROUP" \
-    --query defaultHostName \
-    -o tsv) >> $VALUES_DIR/functions
-}
-
-resolve-GetImages() {
-  echo VAL_GetImages_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/GetImages
-  echo VAL_GetImages_name=GetImages >> $VALUES_DIR/GetImages
-}
-
-resolve-GetUploadUrl() {
-  echo VAL_GetUploadUrl_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/GetUploadUrl
-  echo VAL_GetUploadUrl_name=GetUploadUrl >> $VALUES_DIR/GetUploadUrl
-}
-
-resolve-imageDocuments() {
-  ENDPOINT=$(az cosmosdb show \
-    -n "$NAME_imageDocuments_database_account" \
-    -g "$RESOURCE_GROUP" \
-    --query documentEndpoint \
-    -o tsv) >> $VALUES_DIR/imageDocuments
-  KEY=$(az cosmosdb list-keys \
-    -n "$NAME_imageDocuments_database_account" \
-    -g "$RESOURCE_GROUP" \
-    --query primaryMasterKey \
-    -o tsv)
-  echo VAL_imageDocuments_database_account_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $VALUES_DIR/imageDocuments
-  echo VAL_imageDocuments_database_name=$NAME_imageDocuments_database >> $VALUES_DIR/imageDocuments
-  echo VAL_imageDocuments_name=$NAME_imageDocuments >> $VALUES_DIR/imageDocuments
-}
-
-resolve-images() {
-  echo VAL_images_account_connectionString=$VAL_backingStore_connectionString >> $VALUES_DIR/images
-  echo VAL_images_name=images >> $VALUES_DIR/images
-}
-
-resolve-ResizeImage() {
-  echo VAL_ResizeImage_app_defaultHostName=$VAL_functions_defaultHostName >> $VALUES_DIR/ResizeImage
-  echo VAL_ResizeImage_name=ResizeImage >> $VALUES_DIR/ResizeImage
-}
-
-resolve-thumbnails() {
-  echo VAL_thumbnails_account_connectionString=$VAL_backingStore_connectionString >> $VALUES_DIR/thumbnails
-  echo VAL_thumbnails_name=thumbnails >> $VALUES_DIR/thumbnails
-}
-
-resolve-analyzer & PID_resolve_analyzer=$!
-resolve-backingStore & PID_resolve_backingStore=$!
-resolve-frontend & PID_resolve_frontend=$!
-resolve-functions & PID_resolve_functions=$!
-resolve-imageDocuments & PID_resolve_imageDocuments=$!
-wait $PID_resolve_backingStore && readenv $VALUES_DIR/backingStore
-resolve-images & PID_resolve_images=$!
-resolve-thumbnails & PID_resolve_thumbnails=$!
-wait $PID_resolve_functions && readenv $VALUES_DIR/functions
-resolve-GetImages & PID_resolve_GetImages=$!
-resolve-GetUploadUrl & PID_resolve_GetUploadUrl=$!
-resolve-ResizeImage & PID_resolve_ResizeImage=$!
-wait
-readenv $VALUES_DIR/analyzer
-readenv $VALUES_DIR/frontend
-readenv $VALUES_DIR/GetImages
-readenv $VALUES_DIR/GetUploadUrl
-readenv $VALUES_DIR/imageDocuments
-readenv $VALUES_DIR/images
-readenv $VALUES_DIR/ResizeImage
-readenv $VALUES_DIR/thumbnails
-
-#
-# PHASE 3: CONFIGURE
+# PHASE 2: CONFIGURE
 #
 
 configure-frontend() {
   echo Configuring \'frontend\' static website...
   echo 'window.settings = {}' > www/dist/settings.js
   echo 'window.settings.authEnabled = true' >> www/dist/settings.js
+  echo Configured \'frontend\' static website
 }
 
 configure-functions() {
-  echo Configuring \'functions\' functionapp...
-  APP_ID=$(az ad app list --identifier-uri "https://$NAME_functions.azurewebsites.net" --query '[].appId' -o tsv)
+  echo Configuring \'functions\' function app...
+  APP_ID=$(azp functions ad app list \
+    --identifier-uri "https://$PROP_functions_defaultHostName" \
+    --query '[].appId' \
+    -o tsv)
   if [ -z "$APP_ID" ]; then
-    APP_ID=$(az ad app create \
+    APP_ID=$(azp functions ad app create \
       --display-name "First Serverless Web Application" \
-      --homepage "https://$VAL_functions_defaultHostName" \
-      --identifier-uris "https://$VAL_functions_defaultHostName" \
-      --reply-urls "https://$VAL_functions_defaultHostName/.auth/login/aad/callback" \
+      --homepage "https://$PROP_functions_defaultHostName" \
+      --identifier-uris "https://$PROP_functions_defaultHostName" \
+      --reply-urls "https://$PROP_functions_defaultHostName/.auth/login/aad/callback" \
       --required-resource-accesses '[{
         "resourceAppId": "00000002-0000-0000-c000-000000000000",
         "resourceAccess": [
@@ -278,14 +301,14 @@ configure-functions() {
 .properties.runtimeVersion = "1.0.0" |
 .properties.unauthenticatedClientAction = "RedirectToLoginPage" |
 .properties.tokenStoreEnabled = true |
-.properties.allowedExternalRedirectUrls = [ "$VAL_frontend_primaryEndpoint" ] |
+.properties.allowedExternalRedirectUrls = [ "$PROP_frontend_primaryEndpoint" ] |
 .properties.defaultProvider = "AzureActiveDirectory" |
 .properties.clientId = "$APP_ID" |
 .properties.issuer = "https://sts.windows.net/$(az account show --query tenantId -o tsv)/" |
-.properties.allowedAudiences = [ "https://$VAL_functions_defaultHostName/.auth/login/aad/callback" ] |
+.properties.allowedAudiences = [ "https://$PROP_functions_defaultHostName/.auth/login/aad/callback" ] |
 .properties.isAadAutoProvisioned = true
 EOF
-  az resource invoke-action \
+  azp functions resource invoke-action \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME_functions" \
@@ -295,7 +318,7 @@ EOF
     --api-version 2018-02-01 \
     -o tsv | \
   jq "$(cat $FUNCTIONAPP_AUTH_ENABLE)" | \
-  az resource create \
+  azp -q functions resource create \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME_functions" \
@@ -303,48 +326,49 @@ EOF
     -n authsettings \
     --api-version 2018-02-01 \
     --is-full-object \
-    --properties @/dev/stdin > /dev/null
-  azq functions resource update \
+    --properties @/dev/stdin
+  azp -q functions resource update \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME_functions" \
     --resource-type config \
     -n web \
     --api-version 2015-06-01 \
-    --set properties.cors.allowedOrigins="['"$VAL_frontend_primaryEndpoint"']"
+    --set properties.cors.allowedOrigins="['"$PROP_frontend_primaryEndpoint"']"
+  echo Configured \'functions\' function app
 }
 
 configure-frontend & PID_configure_frontend=$!
 sleep 0.1
 configure-functions & PID_configure_functions=$!
-sleep 0.1
 wait
 
 #
-# PHASE 4: BIND
+# PHASE 3: BIND
 #
 
 bind-frontend() {
-  echo Binding \'frontend\' static website to \'functions\' functionapp...
-  echo 'window.settings.backingStore = { primaryEndpoints: { blob: "'$VAL_backingStore_primaryEndpoints_blob'" } }' >> www/dist/settings.js
-  echo 'window.settings.functions = { defaultHostName: "'$VAL_functions_defaultHostName'" }' >> www/dist/settings.js
+  echo Binding \'frontend\' static website to \'images\' storage container...
+  echo 'window.settings.images = { primaryEndpoint: "'$PROP_images_primaryEndpoint'" }' >> www/dist/settings.js
+  echo Binding \'frontend\' static website to \'functions\' function app...
+  echo 'window.settings.functions = { defaultHostName: "'$PROP_functions_defaultHostName'" }' >> www/dist/settings.js
 }
 
 bind-functions() {
-  echo Binding \'GetImages\' function to \'imageDocuments\' cosmosdb collection...
+  echo Binding \'GetImages\' function to \'imageDocuments\' cosmos db collection...
   echo Binding \'GetUploadUrl\' function to \'images\' storage container...
   echo Binding \'ResizeImage\' function to \'backingStore\' storage account...
-  echo Binding \'ResizeImage\' function to \'imageDocuments\' cosmosdb collection...
-  echo Binding \'ResizeImage\' function to \'analyzer\' cognitiveservices account...
-  azq functions functionapp config appsettings set -n "$NAME_functions" -g "$RESOURCE_GROUP" --settings \
-    "ANALYZER_URL=$VAL_analyzer_url" \
-    "ANALYZER_KEY=$VAL_analyzer_key" \
-    "BACKINGSTORE_CONNECTIONSTRING=$VAL_backingStore_connectionString" \
-    "IMAGEDOCUMENTS_DATABASE_ACCOUNT_CONNECTIONSTRING=$VAL_imageDocuments_database_account_connectionString" \
-    "IMAGEDOCUMENTS_DATABASE_NAME=$VAL_imageDocuments_database_name" \
-    "IMAGEDOCUMENTS_NAME=$VAL_imageDocuments_name" \
-    "IMAGES_ACCOUNT_CONNECTIONSTRING=$VAL_images_account_connectionString" \
-    "IMAGES_NAME=$VAL_images_name"
+  echo Binding \'ResizeImage\' function to \'imageDocuments\' cosmos db collection...
+  echo Binding \'ResizeImage\' function to \'analyzer\' cognitive services account...
+  azp -q functions functionapp config appsettings set -n "$NAME_functions" -g "$RESOURCE_GROUP" --settings \
+    "ANALYZER_URL=$PROP_analyzer_url" \
+    "ANALYZER_KEY=$PROP_analyzer_key" \
+    "BACKINGSTORE_CONNECTIONSTRING=$PROP_backingStore_connectionString" \
+    "IMAGEDOCUMENTS_DATABASE_ACCOUNT_CONNECTIONSTRING=$PROP_imageDocuments_database_account_connectionString" \
+    "IMAGEDOCUMENTS_DATABASE_NAME=$PROP_imageDocuments_database_name" \
+    "IMAGEDOCUMENTS_NAME=$PROP_imageDocuments_name" \
+    "IMAGES_ACCOUNT_CONNECTIONSTRING=$PROP_images_account_connectionString" \
+    "IMAGES_NAME=$PROP_images_name"
 }
 
 bind-frontend & PID_bind_frontend=$!
@@ -354,24 +378,27 @@ sleep 0.1
 wait
 
 #
-# PHASE 5: PUSH
+# PHASE 4: PUSH
 #
 
 push-frontend() {
-  echo Uploading files to \'frontend\' static website...
+  echo Pushing content to \'frontend\' static website...
   az storage blob upload-batch \
     --account-name "$NAME_backingStore" \
     --source www/dist \
     --destination \$web \
-    --query blob \
+    --query '[].blob' \
     -o tsv
   az storage blob service-properties update \
     --account-name "$NAME_backingStore" \
     --index-document index.html
+  echo Pushed content to \'frontend\' static website
 }
 
 push-functions() {
-  echo Deploying functions to \'functions\' functionapp...
+  echo Pushing source for \'GetImages\' function to \'functions\' function app...
+  echo Pushing source for \'GetUploadUrl\' function to \'functions\' function app...
+  echo Pushing source for \'ResizeImage\' function to \'functions\' function app...
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
   trap 'rm -rf $PACKAGE_DIR; rm -f $ZIP_FILE' EXIT
@@ -386,12 +413,19 @@ push-functions() {
     --src $ZIP_FILE \
     --query message \
     -o tsv
+  echo Pushed source for \'GetImages\' function to \'functions\' function app
+  echo Pushed source for \'GetUploadUrl\' function to \'functions\' function app
+  echo Pushed source for \'ResizeImage\' function to \'functions\' function app
 }
 
 push-frontend
 push-functions
 
+#
+# COMPLETION
+#
+
 echo
-echo Available endpoints:
-echo   frontend: $VAL_frontend_primaryEndpoint
+echo endpoints:
+echo "  "frontend: $PROP_frontend_primaryEndpoint
 echo

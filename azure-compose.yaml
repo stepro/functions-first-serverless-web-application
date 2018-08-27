@@ -58,8 +58,7 @@ services:
       source: csharp/ResizeImage
   frontend:
     requires:
-      backingStore:
-        primaryEndpoints: blob
+      images: primaryEndpoint
       functions: true
     staticWebsite:
       account: backingStore

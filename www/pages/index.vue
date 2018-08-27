@@ -54,7 +54,7 @@ export default {
         username: null
       }
       data.apiBaseUrl = 'https://' + window.settings.functions.defaultHostName
-      data.blobBaseUrl = window.settings.backingStore.primaryEndpoints.blob
+      data.blobBaseUrl = window.settings.images.primaryEndpoint
     }
     return data
   },

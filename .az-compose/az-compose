@@ -135,14 +135,14 @@ hash() {
   echo ${HASH::16}
 }
 
-azq() {
-  az "${@:2}" 2>&1 > /dev/null | while read line; do
-    if [ "${line::9}" == "WARNING: " ]; then
+-azp() {
+  az "${@:2}" 3>&1 1>&2 2>&3 | while read err; do
+    if [ "${err::9}" == "WARNING: " ]; then
       continue
     fi
     SKIP=
     for ((i=0; i<${#STDERR_FILTER[@]}; i++)); do
-      if [ "${line::${#STDERR_FILTER[$i]}}" == "${STDERR_FILTER[$i]}" ]; then
+      if [ "${err::${#STDERR_FILTER[$i]}}" == "${STDERR_FILTER[$i]}" ]; then
         SKIP=1
         break
       fi
@@ -150,9 +150,18 @@ azq() {
     if [ -n "$SKIP" ]; then
       continue
     fi
-    echo >&2 $1: $line
+    echo $1: $err
   done
   return $PIPESTATUS
+}
+
+azp() {
+  if [ "$1" == "-q" ]; then
+    shift
+    -azp "$@" 3>&1 1>&2 2>/dev/null
+  else
+    -azp "$@" 3>&1 1>&2 2>&3
+  fi
 }
 
 readenv() {
