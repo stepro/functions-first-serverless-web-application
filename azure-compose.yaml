@@ -15,32 +15,28 @@ services:
     cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
-  apiHost:
-    functionapp:
-      authentication:
-        enabled: true
-        action: azureActiveDirectoryLogin
-        appDisplayName: First Serverless Web Application
-        tokenStore: true
-        redirectUris:
-        - $(frontend:primaryEndpoint)
+  +functionapp:
+    authentication:
+      enabled: true
+      action: azureActiveDirectoryLogin
+      appDisplayName: First Serverless Web Application
+      tokenStore: true
+      redirectUris:
+      - $(frontend:primaryEndpoint)
   GetImages:
     requires: imageDocuments!
     function:
-      app: apiHost
       source: csharp/GetImages
   GetUploadUrl:
     requires: images!
     function:
-      app: apiHost
       source: csharp/GetUploadUrl
   ResizeImage:
     requires: [images!, thumbnails!, imageDocuments!, analyzer!]
     function:
-      app: apiHost
       source: csharp/ResizeImage
   frontend:
-    requires: [images, apiHost]
+    requires: [images, +functionapp]
     staticWebsite:
       content: www/dist
       settings:
