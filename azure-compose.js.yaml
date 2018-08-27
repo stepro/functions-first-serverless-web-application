@@ -26,24 +26,22 @@ services:
         - $(frontend:primaryEndpoint)
       source: javascript/site
   GetImages:
-    requires: imageDocuments
+    requires: imageDocuments!
     function:
       app: functions
       source: javascript/GetImages
   GetUploadUrl:
-    requires: images
+    requires: images!
     function:
       app: functions
       source: javascript/GetUploadUrl
   ResizeImage:
-    requires: [backingStore, imageDocuments, analyzer]
+    requires: [images!, thumbnails!, imageDocuments!, analyzer!]
     function:
       app: functions
       source: javascript/ResizeImage
   frontend:
-    requires:
-      images: primaryEndpoint
-      functions: true
+    requires: [images, functions]
     staticWebsite:
       content: www/dist
       settings:

@@ -25,24 +25,22 @@ services:
         redirectUris:
         - $(frontend:primaryEndpoint)
   GetImages:
-    requires: imageDocuments
+    requires: imageDocuments!
     function:
       app: functions
       source: csharp/GetImages
   GetUploadUrl:
-    requires: images
+    requires: images!
     function:
       app: functions
       source: csharp/GetUploadUrl
   ResizeImage:
-    requires: [backingStore, imageDocuments, analyzer]
+    requires: [images!, thumbnails!, imageDocuments!, analyzer!]
     function:
       app: functions
       source: csharp/ResizeImage
   frontend:
-    requires:
-      images: primaryEndpoint
-      functions: true
+    requires: [images, functions]
     staticWebsite:
       content: www/dist
       settings:
