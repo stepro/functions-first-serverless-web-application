@@ -379,7 +379,7 @@ bind-default-functionapp() {
   if [ "$LANGUAGE" == "javascript" ]; then
     ENABLE_BUILD="SCM_DO_BUILD_DURING_DEPLOYMENT=true"
   fi
-  azp -q +functionapp functionapp config appsettings set -n "$NAME_default_functionapp" -g "$RESOURCE_GROUP" --settings "$ENABLE_BUILD" \
+  azp -q +functionapp functionapp config appsettings set -n "$NAME_default_functionapp" -g "$RESOURCE_GROUP" --settings $ENABLE_BUILD \
     "ANALYZER_URL=$PROP_analyzer_url" \
     "ANALYZER_KEY=$PROP_analyzer_key" \
     "IMAGE_DOCUMENTS_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_imageDocuments_database_account_connectionString" \
@@ -401,7 +401,7 @@ wait
 #
 
 push-frontend() {
-  echo Pushing content to \'frontend\' static website...
+  echo Pushing \'frontend\' content to static website in storage account \'$NAME_default_storageAccount\'...
   local START_TIME=$(date +%s)
   az storage blob upload-batch \
     --account-name "$NAME_default_storageAccount" \
@@ -412,13 +412,13 @@ push-frontend() {
   az storage blob service-properties update \
     --account-name "$NAME_default_storageAccount" \
     --index-document index.html
-  echo Pushed content to \'frontend\' static website in $(since $START_TIME)
+  echo Pushed \'frontend\' content to static website in storage account \'$NAME_default_storageAccount\' in $(since $START_TIME)
 }
 
 push-default-functionapp() {
-  echo Pushing source for \'GetImages\' function to \'functions\' function app...
-  echo Pushing source for \'GetUploadUrl\' function to \'functions\' function app...
-  echo Pushing source for \'ResizeImage\' function to \'functions\' function app...
+  echo Pushing \'GetImages\' source to function app \'$NAME_default_functionapp\'...
+  echo Pushing \'GetUploadUrl\' source to function app \'$NAME_default_functionapp\'...
+  echo Pushing \'ResizeImage\' source to function app \'$NAME_default_functionapp\'...
   local START_TIME=$(date +%s)
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
@@ -436,9 +436,9 @@ push-default-functionapp() {
     --src $ZIP_FILE \
     --query message \
     -o tsv
-  echo Pushed source for \'GetImages\' function to \'functions\' function app in $(since $START_TIME)
-  echo Pushed source for \'GetUploadUrl\' function to \'functions\' function app in $(since $START_TIME)
-  echo Pushed source for \'ResizeImage\' function to \'functions\' function app in $(since $START_TIME)
+  echo Pushed \'GetImages\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Pushed \'GetUploadUrl\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Pushed \'ResizeImage\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
 }
 
 push-frontend

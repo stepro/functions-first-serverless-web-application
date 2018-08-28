@@ -104,11 +104,11 @@ if [ -z "$RG_LOCATION" ]; then
     fatal required option: l, location
   fi
   if [ "$COMMAND" == "up" ]; then
-    echo Creating resource group \'$RESOURCE_GROUP\' in \'$LOCATION\'...
+    echo Creating resource group \'$RESOURCE_GROUP\' in location \'$LOCATION\'...
     az group create -n "$RESOURCE_GROUP" -l "$LOCATION" > /dev/null
   fi
 else
-  echo Using resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
+  echo Using existing resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
 fi
 
 if [ "$COMMAND" == "down" -a -z "$YES" ]; then
