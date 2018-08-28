@@ -376,7 +376,10 @@ bind-default-functionapp() {
   echo Binding \'ResizeImage\' function to \'thumbnails\' storage container...
   echo Binding \'ResizeImage\' function to \'imageDocuments\' cosmos db collection...
   echo Binding \'ResizeImage\' function to \'analyzer\' cognitive services account...
-  azp -q +functionapp functionapp config appsettings set -n "$NAME_default_functionapp" -g "$RESOURCE_GROUP" --settings \
+  if [ "$LANGUAGE" == "javascript" ]; then
+    ENABLE_BUILD="SCM_DO_BUILD_DURING_DEPLOYMENT=true"
+  fi
+  azp -q +functionapp functionapp config appsettings set -n "$NAME_default_functionapp" -g "$RESOURCE_GROUP" --settings "$ENABLE_BUILD" \
     "ANALYZER_URL=$PROP_analyzer_url" \
     "ANALYZER_KEY=$PROP_analyzer_key" \
     "IMAGE_DOCUMENTS_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_imageDocuments_database_account_connectionString" \
@@ -420,7 +423,9 @@ push-default-functionapp() {
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
   trap 'rm -rf $PACKAGE_DIR; rm -f $ZIP_FILE' EXIT
-  # TODO: include build step for javascript case
+  if [ "$LANGUAGE" == "javascript" ]; then
+    cp -R "$LANGUAGE/site/"* $PACKAGE_DIR
+  fi
   cp -R "$LANGUAGE/GetImages" $PACKAGE_DIR
   cp -R "$LANGUAGE/GetUploadUrl" $PACKAGE_DIR
   cp -R "$LANGUAGE/ResizeImage" $PACKAGE_DIR
