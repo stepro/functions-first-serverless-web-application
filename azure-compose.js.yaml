@@ -5,7 +5,7 @@ services:
   thumbnails:
     storageContainer:
       publicAccess: blob
-  imageDocuments:
+  imageMetadata:
     cosmosdbCollection:
       name: images
       database:
@@ -25,7 +25,7 @@ services:
       - $(frontend:primaryEndpoint)
     source: javascript/site
   GetImages:
-    requires: imageDocuments!
+    requires: imageMetadata!
     function:
       source: javascript/GetImages
   GetUploadUrl:
@@ -33,7 +33,7 @@ services:
     function:
       source: javascript/GetUploadUrl
   ResizeImage:
-    requires: [images!, thumbnails!, imageDocuments!, analyzer!]
+    requires: [images!, thumbnails!, imageMetadata!, analyzer!]
     function:
       source: javascript/ResizeImage
   frontend:

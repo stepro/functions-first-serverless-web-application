@@ -5,7 +5,7 @@ services:
   thumbnails:
     storageContainer:
       publicAccess: blob
-  imageDocuments:
+  imageMetadata:
     cosmosdbCollection:
       name: images
       database:
@@ -24,7 +24,7 @@ services:
       redirectUris:
       - $(frontend:primaryEndpoint)
   GetImages:
-    requires: imageDocuments!
+    requires: imageMetadata!
     function:
       source: csharp/GetImages
   GetUploadUrl:
@@ -32,7 +32,7 @@ services:
     function:
       source: csharp/GetUploadUrl
   ResizeImage:
-    requires: [images!, thumbnails!, imageDocuments!, analyzer!]
+    requires: [images!, thumbnails!, imageMetadata!, analyzer!]
     function:
       source: csharp/ResizeImage
   frontend:

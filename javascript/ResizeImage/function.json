@@ -19,7 +19,7 @@
             "name": "$return",
             "type": "documentDB",
             "direction": "out",
-            "connection": "IMAGE_DOCUMENTS_DATABASE_ACCOUNT_CONNECTION_STRING",
+            "connection": "IMAGE_METADATA_DATABASE_ACCOUNT_CONNECTION_STRING",
             "databaseName": "imagesdb",
             "collectionName": "images",
             "createIfNotExists": false

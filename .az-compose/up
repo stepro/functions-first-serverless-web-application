@@ -137,54 +137,54 @@ create-GetUploadUrl() {
   echo Created \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionapp\' in $(since $START_TIME)
 }
 
-NAME_imageDocuments=images
-NAME_imageDocuments_database=imagesdb
-NAME_imageDocuments_database_account=imagedocuments-$(hash cosmosdb/imageDocuments@$LOCATION)
-create-imageDocuments() {
-  NAME="$NAME_imageDocuments"
-  NAME_database="$NAME_imageDocuments_database"
-  NAME_database_account="$NAME_imageDocuments_database_account"
-  echo Creating \'imageDocuments\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'...
+NAME_imageMetadata=images
+NAME_imageMetadata_database=imagesdb
+NAME_imageMetadata_database_account=imagemetadata-$(hash cosmosdb/imageMetadata@$LOCATION)
+create-imageMetadata() {
+  NAME="$NAME_imageMetadata"
+  NAME_database="$NAME_imageMetadata_database"
+  NAME_database_account="$NAME_imageMetadata_database_account"
+  echo Creating \'imageMetadata\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'...
   local START_TIME=$(date +%s)
-  ENDPOINT=$(azp imageDocuments cosmosdb create \
+  ENDPOINT=$(azp imageMetadata cosmosdb create \
     -n "$NAME_database_account" \
     -g "$RESOURCE_GROUP" \
     --query documentEndpoint \
     -o tsv)
-  KEY=$(azp imageDocuments cosmosdb list-keys \
+  KEY=$(azp imageMetadata cosmosdb list-keys \
     -n "$NAME_database_account" \
     -g "$RESOURCE_GROUP" \
     --query primaryMasterKey \
     -o tsv)
-  echo PROP_imageDocuments_database_account_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/imageDocuments
-  EXISTS=$(azp imageDocuments cosmosdb database exists \
+  echo PROP_imageMetadata_database_account_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/imageMetadata
+  EXISTS=$(azp imageMetadata cosmosdb database exists \
     -n "$NAME_database_account" \
     -g "$RESOURCE_GROUP" \
     --db-name "$NAME_database" \
     -o tsv)
   if [ "$EXISTS" == "false" ]; then
-    azp -q imageDocuments cosmosdb database create \
+    azp -q imageMetadata cosmosdb database create \
       -n "$NAME_database_account" \
       -g "$RESOURCE_GROUP" \
       --db-name "$NAME_database"
   fi
-  echo PROP_imageDocuments_database_name="$NAME_database" >> $PROPS/imageDocuments
-  EXISTS=$(azp imageDocuments cosmosdb collection exists \
+  echo PROP_imageMetadata_database_name="$NAME_database" >> $PROPS/imageMetadata
+  EXISTS=$(azp imageMetadata cosmosdb collection exists \
     -n "$NAME_database_account" \
     -g "$RESOURCE_GROUP" \
     --db-name "$NAME_database" \
     --collection-name "$NAME" \
     -o tsv)
   if [ "$EXISTS" == "false" ]; then
-    azp -q imageDocuments cosmosdb collection create \
+    azp -q imageMetadata cosmosdb collection create \
       -n "$NAME_database_account" \
       -g "$RESOURCE_GROUP" \
       --db-name "$NAME_database" \
       --collection-name "$NAME" \
       --throughput 400
   fi
-  echo PROP_imageDocuments_name="$NAME" >> $PROPS/imageDocuments
-  echo Created \'imageDocuments\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\' in $(since $START_TIME)
+  echo PROP_imageMetadata_name="$NAME" >> $PROPS/imageMetadata
+  echo Created \'imageMetadata\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\' in $(since $START_TIME)
 }
 
 NAME_images=images
@@ -234,7 +234,7 @@ create-thumbnails() {
 # - frontend <- +storageAccount
 # - GetImages <- +functionapp
 # - GetUploadUrl <- +functionapp
-# - imageDocuments
+# - imageMetadata
 # - images <- +storageAccount
 # - ResizeImage <- +functionapp
 # - thumbnails <- +storageAccount
@@ -243,7 +243,7 @@ create-analyzer & PID_create_analyzer=$!
 sleep 0.1
 create-default-storageAccount & PID_create_default_storageAccount=$!
 sleep 0.1
-create-imageDocuments & PID_create_imageDocuments=$!
+create-imageMetadata & PID_create_imageMetadata=$!
 sleep 0.1
 wait $PID_create_default_storageAccount && readenv $PROPS/default_storageAccount
 create-default-functionapp & PID_create_default_functionapp=$!
@@ -265,7 +265,7 @@ readenv $PROPS/analyzer
 readenv $PROPS/frontend
 readenv $PROPS/GetImages
 readenv $PROPS/GetUploadUrl
-readenv $PROPS/imageDocuments
+readenv $PROPS/imageMetadata
 readenv $PROPS/images
 readenv $PROPS/ResizeImage
 readenv $PROPS/thumbnails
@@ -370,11 +370,11 @@ bind-frontend() {
 }
 
 bind-default-functionapp() {
-  echo Binding \'GetImages\' function to \'imageDocuments\' cosmos db collection...
+  echo Binding \'GetImages\' function to \'imageMetadata\' cosmos db collection...
   echo Binding \'GetUploadUrl\' function to \'images\' storage container...
   echo Binding \'ResizeImage\' function to \'images\' storage container...
   echo Binding \'ResizeImage\' function to \'thumbnails\' storage container...
-  echo Binding \'ResizeImage\' function to \'imageDocuments\' cosmos db collection...
+  echo Binding \'ResizeImage\' function to \'imageMetadata\' cosmos db collection...
   echo Binding \'ResizeImage\' function to \'analyzer\' cognitive services account...
   if [ "$LANGUAGE" == "javascript" ]; then
     ENABLE_BUILD="SCM_DO_BUILD_DURING_DEPLOYMENT=true"
@@ -382,9 +382,9 @@ bind-default-functionapp() {
   azp -q +functionapp functionapp config appsettings set -n "$NAME_default_functionapp" -g "$RESOURCE_GROUP" --settings $ENABLE_BUILD \
     "ANALYZER_URL=$PROP_analyzer_url" \
     "ANALYZER_KEY=$PROP_analyzer_key" \
-    "IMAGE_DOCUMENTS_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_imageDocuments_database_account_connectionString" \
-    "IMAGE_DOCUMENTS_DATABASE_NAME=$PROP_imageDocuments_database_name" \
-    "IMAGE_DOCUMENTS_NAME=$PROP_imageDocuments_name" \
+    "IMAGE_METADATA_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_imageMetadata_database_account_connectionString" \
+    "IMAGE_METADATA_DATABASE_NAME=$PROP_imageMetadata_database_name" \
+    "IMAGE_METADATA_NAME=$PROP_imageMetadata_name" \
     "IMAGES_ACCOUNT_CONNECTION_STRING=$PROP_images_account_connectionString" \
     "IMAGES_NAME=$PROP_images_name" \
     "THUMBNAILS_ACCOUNT_CONNECTION_STRING=$PROP_thumbnails_account_connectionString" \
