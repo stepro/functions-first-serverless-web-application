@@ -49,6 +49,25 @@ create-analyzer() {
   echo Created \'analyzer\' as cognitive services account \'$NAME\' in $(since $START_TIME)
 }
 
+NAME_default_cosmosdb=default-$(hash cosmosdb/default@$LOCATION)
+create-default-cosmosdb() {
+  NAME="$NAME_default_cosmosdb"
+  echo Creating default cosmos db account \'$NAME\'...
+  local START_TIME=$(date +%s)
+  ENDPOINT=$(azp +cosmosdb cosmosdb create \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    --query documentEndpoint \
+    -o tsv)
+  KEY=$(azp +cosmosdb cosmosdb list-keys \
+    -n "$NAME" \
+    -g "$RESOURCE_GROUP" \
+    --query primaryMasterKey \
+    -o tsv)
+  echo PROP_default_cosmosdb_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/default_cosmosdb
+  echo Created default cosmos db account \'$NAME\' in $(since $START_TIME)
+}
+
 NAME_default_functionapp=default-$(hash functionapp/default@$LOCATION)
 create-default-functionapp() {
   NAME="$NAME_default_functionapp"
@@ -139,24 +158,13 @@ create-GetUploadUrl() {
 
 NAME_imageMetadata=images
 NAME_imageMetadata_database=imagesdb
-NAME_imageMetadata_database_account=imagemetadata-$(hash cosmosdb/imageMetadata@$LOCATION)
 create-imageMetadata() {
   NAME="$NAME_imageMetadata"
   NAME_database="$NAME_imageMetadata_database"
-  NAME_database_account="$NAME_imageMetadata_database_account"
+  NAME_database_account="$NAME_default_cosmosdb"
   echo Creating \'imageMetadata\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'...
   local START_TIME=$(date +%s)
-  ENDPOINT=$(azp imageMetadata cosmosdb create \
-    -n "$NAME_database_account" \
-    -g "$RESOURCE_GROUP" \
-    --query documentEndpoint \
-    -o tsv)
-  KEY=$(azp imageMetadata cosmosdb list-keys \
-    -n "$NAME_database_account" \
-    -g "$RESOURCE_GROUP" \
-    --query primaryMasterKey \
-    -o tsv)
-  echo PROP_imageMetadata_database_account_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/imageMetadata
+  echo PROP_imageMetadata_database_account_connectionString="$PROP_default_cosmosdb_connectionString" >> $PROPS/imageMetadata
   EXISTS=$(azp imageMetadata cosmosdb database exists \
     -n "$NAME_database_account" \
     -g "$RESOURCE_GROUP" \
@@ -229,21 +237,22 @@ create-thumbnails() {
 
 # Creation dependencies:
 # - analyzer
+# - +cosmosdb
 # - +functionapp <- +storageAccount
 # - +storageAccount
 # - frontend <- +storageAccount
 # - GetImages <- +functionapp
 # - GetUploadUrl <- +functionapp
-# - imageMetadata
+# - imageMetadata <- +cosmosdb
 # - images <- +storageAccount
 # - ResizeImage <- +functionapp
 # - thumbnails <- +storageAccount
 
 create-analyzer & PID_create_analyzer=$!
 sleep 0.1
-create-default-storageAccount & PID_create_default_storageAccount=$!
+create-default-cosmosdb & PID_create_default_cosmosdb=$!
 sleep 0.1
-create-imageMetadata & PID_create_imageMetadata=$!
+create-default-storageAccount & PID_create_default_storageAccount=$!
 sleep 0.1
 wait $PID_create_default_storageAccount && readenv $PROPS/default_storageAccount
 create-default-functionapp & PID_create_default_functionapp=$!
@@ -260,6 +269,8 @@ sleep 0.1
 create-GetUploadUrl & PID_create_GetUploadUrl=$!
 sleep 0.1
 create-ResizeImage & PID_create_ResizeImage=$!
+wait $PID_create_default_cosmosdb && readenv $PROPS/default_cosmosdb
+create-imageMetadata & PID_create_imageMetadata=$!
 wait
 readenv $PROPS/analyzer
 readenv $PROPS/frontend
