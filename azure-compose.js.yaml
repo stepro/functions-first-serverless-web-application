@@ -1,47 +1,43 @@
 services:
+  frontend:
+    staticWebsite:
+      requires: [+functionapp, images]
+      content: www/dist
+      settings:
+        authEnabled: true
+      index: index.html
+  +functionapp:
+    authentication:
+      activeDirectory:
+        appDisplayName: First Serveless Web Application
+      tokenStore: true
+      redirectTo: frontend
+    source: javascript/site
+  GetImages:
+    function:
+      requires: imageMetadata!
+      source: javascript/GetImages
+  GetUploadUrl:
+    function:
+      requires: images!
+      source: javascript/GetUploadUrl
+  ResizeImage:
+    function:
+      requires: [images!, thumbnails!, analyzer!, imageMetadata!]
+      source: javascript/ResizeImage
   images:
     storageContainer:
       publicAccess: blob
   thumbnails:
     storageContainer:
       publicAccess: blob
+  analyzer:
+    cognitiveservices:
+      kind: ComputerVision
+      pricingTier: F0
   imageMetadata:
     cosmosdbCollection:
       name: images
       database:
       - name: imagesdb
       throughput: 400
-  analyzer:
-    cognitiveservicesAccount:
-      kind: ComputerVision
-      sku: F0
-  +functionapp:
-    authentication:
-      enabled: true
-      action: azureActiveDirectoryLogin
-      appDisplayName: First Serverless Web Application
-      tokenStore: true
-      redirectUris:
-      - $(frontend:primaryEndpoint)
-    source: javascript/site
-  GetImages:
-    requires: imageMetadata!
-    function:
-      source: javascript/GetImages
-  GetUploadUrl:
-    requires: images!
-    function:
-      source: javascript/GetUploadUrl
-  ResizeImage:
-    requires: [images!, thumbnails!, imageMetadata!, analyzer!]
-    function:
-      source: javascript/ResizeImage
-  frontend:
-    requires: [images, +functionapp]
-    staticWebsite:
-      content: www/dist
-      settings:
-        authEnabled: true
-      index: index.html
-endpoints:
-  frontend: $(frontend:primaryEndpoint)
