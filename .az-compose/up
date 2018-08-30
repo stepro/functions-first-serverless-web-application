@@ -1,7 +1,5 @@
   #!/bin/bash
 
-# The full list of alphabetized services:
-#
 # analyzer
 # +cosmosdb
 # +functionApp
