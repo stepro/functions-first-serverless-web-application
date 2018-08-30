@@ -395,7 +395,7 @@ services:
     cognitiveservicesAccount:
       kind: ComputerVision
       sku: F0
-  +functionapp:
+  +functionApp:
     authentication:
       enabled: true
       action: azureActiveDirectoryLogin

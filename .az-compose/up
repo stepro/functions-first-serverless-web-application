@@ -1,4 +1,18 @@
-#!/bin/bash
+  #!/bin/bash
+
+# The full list of alphabetized services:
+#
+# analyzer
+# +cosmosdb
+# +functionApp
+# +storageAccount
+# frontend
+# GetImages
+# GetUploadUrl
+# imageMetadata
+# images
+# ResizeImage
+# thumbnails
 
 LANGUAGE=csharp
 if [ "$COMPOSE_FILE" == "azure-compose.js.yaml" ]; then
@@ -26,10 +40,10 @@ build-frontend() {
 PROPS=$(mktemp -d)
 trap 'rm -rf $PROPS' EXIT
 
-NAME_analyzer=analyzer-$(hash cognitiveservices/account/analyzer@$LOCATION)
+NAME_analyzer=analyzer-$(hash cognitiveService/analyzer@$LOCATION)
 create-analyzer() {
   NAME="$NAME_analyzer"
-  echo Creating \'analyzer\' as cognitive services account \'$NAME\'...
+  echo Creating \'analyzer\' as cognitive service \'$NAME\'...
   START_TIME=$(date +%s)
   STDERR_FILTER=("Microsoft will use ")
   echo PROP_analyzer_url=$(azp analyzer cognitiveservices account create \
@@ -46,13 +60,13 @@ create-analyzer() {
     -g "$RESOURCE_GROUP" \
     --query key1 \
     -o tsv) >> $PROPS/analyzer
-  echo Created \'analyzer\' as cognitive services account \'$NAME\' in $(since $START_TIME)
+  echo Created \'analyzer\' as cognitive service \'$NAME\' in $(since $START_TIME)
 }
 
 NAME_default_cosmosdb=default-$(hash cosmosdb/default@$LOCATION)
 create-default-cosmosdb() {
   NAME="$NAME_default_cosmosdb"
-  echo Creating default cosmos db account \'$NAME\'...
+  echo Creating default Cosmos DB database account \'$NAME\'...
   START_TIME=$(date +%s)
   ENDPOINT=$(azp +cosmosdb cosmosdb create \
     -n "$NAME" \
@@ -65,25 +79,25 @@ create-default-cosmosdb() {
     --query primaryMasterKey \
     -o tsv)
   echo PROP_default_cosmosdb_connectionString="AccountEndpoint=$ENDPOINT;AccountKey=$KEY;" >> $PROPS/default_cosmosdb
-  echo Created default cosmos db account \'$NAME\' in $(since $START_TIME)
+  echo Created default Cosmos DB database account \'$NAME\' in $(since $START_TIME)
 }
 
-NAME_default_functionapp=default-$(hash functionapp/default@$LOCATION)
-create-default-functionapp() {
-  NAME="$NAME_default_functionapp"
+NAME_default_functionApp=default-$(hash functionApp/default@$LOCATION)
+create-default-functionApp() {
+  NAME="$NAME_default_functionApp"
   echo Creating default function app \'$NAME\'...
   START_TIME=$(date +%s)
-  echo PROP_default_functionapp_defaultHostName=$(azp +functionapp functionapp create \
+  echo PROP_default_functionApp_defaultHostName=$(azp +functionApp functionapp create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -c "$LOCATION" \
     -s "$NAME_default_storageAccount" \
     --query defaultHostName \
-    -o tsv) >> $PROPS/default_functionapp
+    -o tsv) >> $PROPS/default_functionApp
   echo Created default function app \'$NAME\' in $(since $START_TIME)
 }
 
-NAME_default_storageAccount=default$(hash storage/account/default@$LOCATION)
+NAME_default_storageAccount=default$(hash storageAccount/default@$LOCATION)
 create-default-storageAccount() {
   NAME="$NAME_default_storageAccount"
   echo Creating default storage account \'$NAME\'...
@@ -125,21 +139,21 @@ create-frontend() {
 NAME_GetImages=GetImages
 create-GetImages() {
   NAME="$NAME_GetImages"
-  echo Creating \'GetImages\' as function \'$NAME\' in function app \'$NAME_default_functionapp\'...
+  echo Creating \'GetImages\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
-  echo PROP_GetImages_app_defaultHostName="$PROP_default_functionapp_defaultHostName" >> $PROPS/GetImages
+  echo PROP_GetImages_app_defaultHostName="$PROP_default_functionApp_defaultHostName" >> $PROPS/GetImages
   echo PROP_GetImages_name="$NAME" >> $PROPS/GetImages
-  echo Created \'GetImages\' as function \'$NAME\' in function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Created \'GetImages\' as function \'$NAME\' in function app \'$NAME_default_functionApp\' in $(since $START_TIME)
 }
 
 NAME_GetUploadUrl=GetUploadUrl
 create-GetUploadUrl() {
   NAME="$NAME_GetUploadUrl"
-  echo Creating \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionapp\'...
+  echo Creating \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
-  echo PROP_GetUploadUrl_app_defaultHostName="$PROP_default_functionapp_defaultHostName" >> $PROPS/GetUploadUrl
+  echo PROP_GetUploadUrl_app_defaultHostName="$PROP_default_functionApp_defaultHostName" >> $PROPS/GetUploadUrl
   echo PROP_GetUploadUrl_name="$NAME" >> $PROPS/GetUploadUrl
-  echo Created \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Created \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionApp\' in $(since $START_TIME)
 }
 
 NAME_imageMetadata=images
@@ -148,7 +162,7 @@ create-imageMetadata() {
   NAME="$NAME_imageMetadata"
   NAME_database="$NAME_imageMetadata_database"
   NAME_database_account="$NAME_default_cosmosdb"
-  echo Creating \'imageMetadata\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\'...
+  echo Creating \'imageMetadata\' as collection \'$NAME\' in Cosmos DB database \'$NAME_database\' account \'$NAME_database_account\'...
   START_TIME=$(date +%s)
   echo PROP_imageMetadata_database_account_connectionString="$PROP_default_cosmosdb_connectionString" >> $PROPS/imageMetadata
   EXISTS=$(azp imageMetadata cosmosdb database exists \
@@ -178,7 +192,7 @@ create-imageMetadata() {
       --throughput 400
   fi
   echo PROP_imageMetadata_name="$NAME" >> $PROPS/imageMetadata
-  echo Created \'imageMetadata\' as collection \'$NAME\' in cosmos db database \'$NAME_database\' account \'$NAME_database_account\' in $(since $START_TIME)
+  echo Created \'imageMetadata\' as collection \'$NAME\' in Cosmos DB database \'$NAME_database\' account \'$NAME_database_account\' in $(since $START_TIME)
 }
 
 NAME_images=images
@@ -199,11 +213,11 @@ create-images() {
 NAME_ResizeImage=ResizeImage
 create-ResizeImage() {
   NAME="$NAME_ResizeImage"
-  echo Creating \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_default_functionapp\'...
+  echo Creating \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
-  echo PROP_ResizeImage_app_defaultHostName="$PROP_default_functionapp_defaultHostName" >> $PROPS/ResizeImage
+  echo PROP_ResizeImage_app_defaultHostName="$PROP_default_functionApp_defaultHostName" >> $PROPS/ResizeImage
   echo PROP_ResizeImage_name="$NAME" >> $PROPS/ResizeImage
-  echo Created \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Created \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_default_functionApp\' in $(since $START_TIME)
 }
 
 NAME_thumbnails=thumbnails
@@ -224,14 +238,14 @@ create-thumbnails() {
 # Creation dependencies:
 # - analyzer
 # - +cosmosdb
-# - +functionapp <- +storageAccount
+# - +functionApp <- +storageAccount
 # - +storageAccount
 # - frontend <- +storageAccount
-# - GetImages <- +functionapp
-# - GetUploadUrl <- +functionapp
+# - GetImages <- +functionApp
+# - GetUploadUrl <- +functionApp
 # - imageMetadata <- +cosmosdb
 # - images <- +storageAccount
-# - ResizeImage <- +functionapp
+# - ResizeImage <- +functionApp
 # - thumbnails <- +storageAccount
 
 create-analyzer & PID_create_analyzer=$!
@@ -241,7 +255,7 @@ sleep 0.1
 create-default-storageAccount & PID_create_default_storageAccount=$!
 sleep 0.1
 wait $PID_create_default_storageAccount && readenv $PROPS/default_storageAccount
-create-default-functionapp & PID_create_default_functionapp=$!
+create-default-functionApp & PID_create_default_functionApp=$!
 sleep 0.1
 create-frontend & PID_create_frontend=$!
 sleep 0.1
@@ -249,12 +263,13 @@ create-images & PID_create_images=$!
 sleep 0.1
 create-thumbnails & PID_create_thumbnails=$!
 sleep 0.1
-wait $PID_create_default_functionapp && readenv $PROPS/default_functionapp
+wait $PID_create_default_functionApp && readenv $PROPS/default_functionApp
 create-GetImages & PID_create_GetImages=$!
 sleep 0.1
 create-GetUploadUrl & PID_create_GetUploadUrl=$!
 sleep 0.1
 create-ResizeImage & PID_create_ResizeImage=$!
+sleep 0.1
 wait $PID_create_default_cosmosdb && readenv $PROPS/default_cosmosdb
 create-imageMetadata & PID_create_imageMetadata=$!
 wait
@@ -271,20 +286,20 @@ readenv $PROPS/thumbnails
 # PHASE 2: CONFIGURE
 #
 
-configure-default-functionapp() {
-  NAME="$NAME_default_functionapp"
+configure-default-functionApp() {
+  NAME="$NAME_default_functionApp"
   echo Configuring default function app...
   START_TIME=$(date +%s)
-  APP_ID=$(azp +functionapp ad app list \
-    --identifier-uri "https://$PROP_default_functionapp_defaultHostName" \
+  APP_ID=$(azp +functionApp ad app list \
+    --identifier-uri "https://$PROP_default_functionApp_defaultHostName" \
     --query '[].appId' \
     -o tsv)
   if [ -z "$APP_ID" ]; then
-    APP_ID=$(azp +functionapp ad app create \
+    APP_ID=$(azp +functionApp ad app create \
       --display-name "First Serverless Web Application" \
-      --homepage "https://$PROP_default_functionapp_defaultHostName" \
-      --identifier-uris "https://$PROP_default_functionapp_defaultHostName" \
-      --reply-urls "https://$PROP_default_functionapp_defaultHostName/.auth/login/aad/callback" \
+      --homepage "https://$PROP_default_functionApp_defaultHostName" \
+      --identifier-uris "https://$PROP_default_functionApp_defaultHostName" \
+      --reply-urls "https://$PROP_default_functionApp_defaultHostName/.auth/login/aad/callback" \
       --required-resource-accesses '[{
         "resourceAppId": "00000002-0000-0000-c000-000000000000",
         "resourceAccess": [
@@ -308,10 +323,10 @@ configure-default-functionapp() {
 .properties.defaultProvider = "AzureActiveDirectory" |
 .properties.clientId = "$APP_ID" |
 .properties.issuer = "https://sts.windows.net/$(az account show --query tenantId -o tsv)/" |
-.properties.allowedAudiences = [ "https://$PROP_default_functionapp_defaultHostName/.auth/login/aad/callback" ] |
+.properties.allowedAudiences = [ "https://$PROP_default_functionApp_defaultHostName/.auth/login/aad/callback" ] |
 .properties.isAadAutoProvisioned = true
 EOF
-  azp +functionapp resource invoke-action \
+  azp +functionApp resource invoke-action \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME" \
@@ -321,7 +336,7 @@ EOF
     --api-version 2018-02-01 \
     -o tsv | \
   jq "$(cat $FUNCTIONAPP_AUTH_ENABLE)" | \
-  azp -q +functionapp resource create \
+  azp -q +functionApp resource create \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME" \
@@ -330,7 +345,7 @@ EOF
     --api-version 2018-02-01 \
     --is-full-object \
     --properties @/dev/stdin
-  azp -q +functionapp resource update \
+  azp -q +functionApp resource update \
     -g "$RESOURCE_GROUP" \
     --namespace Microsoft.Web \
     --parent "sites/$NAME" \
@@ -358,38 +373,28 @@ configure-default-storageAccount() {
   echo Configured default storage account in $(since $START_TIME)
 }
 
-configure-frontend() {
-  echo Configuring \'frontend\' static website...
-  START_TIME=$(date +%s)
-  echo 'window.settings = {}' > www/dist/settings.js
-  echo 'window.settings.authEnabled = true' >> www/dist/settings.js
-  echo Configured \'frontend\' static website in $(since $START_TIME)
-}
-
-configure-default-functionapp &
+configure-default-functionApp &
 sleep 0.1
 configure-default-storageAccount &
-sleep 0.1
-configure-frontend &
 wait
 
 #
 # PHASE 3: BIND
 #
 
-bind-default-functionapp() {
-  NAME="$NAME_default_functionapp"
-  echo Binding \'GetImages\' function to \'imageMetadata\' cosmos db collection...
+bind-default-functionApp() {
+  NAME="$NAME_default_functionApp"
+  echo Binding \'GetImages\' function to \'imageMetadata\' Cosmos DB collection...
   echo Binding \'GetUploadUrl\' function to \'images\' storage container...
-  echo Binding \'ResizeImage\' function to \'analyzer\' cognitive services account...
-  echo Binding \'ResizeImage\' function to \'imageMetadata\' cosmos db collection...
+  echo Binding \'ResizeImage\' function to \'analyzer\' cognitive service...
+  echo Binding \'ResizeImage\' function to \'imageMetadata\' Cosmos DB collection...
   echo Binding \'ResizeImage\' function to \'images\' storage container...
   echo Binding \'ResizeImage\' function to \'thumbnails\' storage container...
   START_TIME=$(date +%s)
   if [ "$LANGUAGE" == "javascript" ]; then
     ENABLE_BUILD="SCM_DO_BUILD_DURING_DEPLOYMENT=true"
   fi
-  azp -q +functionapp functionapp config appsettings set -n "$NAME" -g "$RESOURCE_GROUP" --settings $ENABLE_BUILD \
+  azp -q +functionApp functionapp config appsettings set -n "$NAME" -g "$RESOURCE_GROUP" --settings $ENABLE_BUILD \
     "ANALYZER_URL=$PROP_analyzer_url" \
     "ANALYZER_KEY=$PROP_analyzer_key" \
     "IMAGE_METADATA_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_imageMetadata_database_account_connectionString" \
@@ -399,10 +404,10 @@ bind-default-functionapp() {
     "IMAGES_NAME=$PROP_images_name" \
     "THUMBNAILS_ACCOUNT_CONNECTION_STRING=$PROP_thumbnails_account_connectionString" \
     "THUMBNAILS_NAME=$PROP_thumbnails_name"
-  echo Bound \'GetImages\' function to \'imageMetadata\' cosmos db collection in $(since $START_TIME)
+  echo Bound \'GetImages\' function to \'imageMetadata\' Cosmos DB collection in $(since $START_TIME)
   echo Bound \'GetUploadUrl\' function to \'images\' storage container in $(since $START_TIME)
-  echo Bound \'ResizeImage\' function to \'analyzer\' cognitive services account in $(since $START_TIME)
-  echo Bound \'ResizeImage\' function to \'imageMetadata\' cosmos db collection in $(since $START_TIME)
+  echo Bound \'ResizeImage\' function to \'analyzer\' cognitive service in $(since $START_TIME)
+  echo Bound \'ResizeImage\' function to \'imageMetadata\' Cosmos DB collection in $(since $START_TIME)
   echo Bound \'ResizeImage\' function to \'images\' storage container in $(since $START_TIME)
   echo Bound \'ResizeImage\' function to \'thumbnails\' storage container in $(since $START_TIME)
 }
@@ -411,14 +416,15 @@ bind-frontend() {
   echo Binding \'frontend\' static website to default function app...
   echo Binding \'frontend\' static website to \'images\' storage container...
   START_TIME=$(date +%s)
+  echo 'window.settings = {}' > www/dist/settings.js
   echo 'window.settings.default = {}' >> www/dist/settings.js
-  echo 'window.settings.default.functionapp = { defaultHostName: "'$PROP_default_functionapp_defaultHostName'" }' >> www/dist/settings.js
+  echo 'window.settings.default.functionApp = { defaultHostName: "'$PROP_default_functionApp_defaultHostName'" }' >> www/dist/settings.js
   echo 'window.settings.images = { primaryEndpoint: "'$PROP_images_primaryEndpoint'" }' >> www/dist/settings.js
   echo Bound \'frontend\' static website to default function app in $(since $START_TIME)
   echo Bound \'frontend\' static website to \'images\' storage container in $(since $START_TIME)
 }
 
-bind-default-functionapp &
+bind-default-functionApp &
 sleep 0.1
 bind-frontend &
 wait
@@ -427,10 +433,10 @@ wait
 # PHASE 4: PUSH
 #
 
-push-default-functionapp() {
-  echo Pushing \'GetImages\' source to function app \'$NAME_default_functionapp\'...
-  echo Pushing \'GetUploadUrl\' source to function app \'$NAME_default_functionapp\'...
-  echo Pushing \'ResizeImage\' source to function app \'$NAME_default_functionapp\'...
+push-default-functionApp() {
+  echo Pushing \'GetImages\' source to function app \'$NAME_default_functionApp\'...
+  echo Pushing \'GetUploadUrl\' source to function app \'$NAME_default_functionApp\'...
+  echo Pushing \'ResizeImage\' source to function app \'$NAME_default_functionApp\'...
   local START_TIME=$(date +%s)
   PACKAGE_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp -u).zip
@@ -443,19 +449,20 @@ push-default-functionapp() {
   cp -R "$LANGUAGE/ResizeImage" $PACKAGE_DIR
   (cd $PACKAGE_DIR && zip -r $ZIP_FILE .)
   az functionapp deployment source config-zip \
-    -n "$NAME_default_functionapp" \
+    -n "$NAME_default_functionApp" \
     -g "$RESOURCE_GROUP" \
     --src $ZIP_FILE \
     --query message \
     -o tsv
-  echo Pushed \'GetImages\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
-  echo Pushed \'GetUploadUrl\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
-  echo Pushed \'ResizeImage\' source to function app \'$NAME_default_functionapp\' in $(since $START_TIME)
+  echo Pushed \'GetImages\' source to function app \'$NAME_default_functionApp\' in $(since $START_TIME)
+  echo Pushed \'GetUploadUrl\' source to function app \'$NAME_default_functionApp\' in $(since $START_TIME)
+  echo Pushed \'ResizeImage\' source to function app \'$NAME_default_functionApp\' in $(since $START_TIME)
 }
 
 push-frontend() {
   echo Pushing \'frontend\' content to static website in storage account \'$NAME_default_storageAccount\'...
   local START_TIME=$(date +%s)
+  echo 'window.settings.authEnabled = true' >> www/dist/settings.js
   az storage blob upload-batch \
     --account-name "$NAME_default_storageAccount" \
     --source www/dist \
@@ -468,7 +475,7 @@ push-frontend() {
   echo Pushed \'frontend\' content to static website in storage account \'$NAME_default_storageAccount\' in $(since $START_TIME)
 }
 
-push-default-functionapp
+push-default-functionApp
 push-frontend
 
 #
@@ -477,5 +484,6 @@ push-frontend
 
 echo
 echo endpoints:
-echo "  "frontend: $PROP_frontend_primaryEndpoint
+echo " +functionApp: https://$PROP_default_functionApp_defaultHostName"
+echo "  frontend:    $PROP_frontend_primaryEndpoint"
 echo

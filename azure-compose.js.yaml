@@ -1,15 +1,18 @@
 services:
   frontend:
     staticWebsite:
-      requires: [+functionapp, images]
+      requires:
+        +functionApp:
+        images:
+          methods: [PUT]
       content: www/dist
       settings:
         authEnabled: true
       index: index.html
-  +functionapp:
+  +functionApp:
     authentication:
       activeDirectory:
-        appDisplayName: First Serveless Web Application
+        appDisplayName: First Serverless Web Application
       tokenStore: true
       redirectTo: frontend
     source: javascript/site
@@ -32,7 +35,7 @@ services:
     storageContainer:
       publicAccess: blob
   analyzer:
-    cognitiveservices:
+    cognitiveService:
       kind: ComputerVision
       pricingTier: F0
   imageMetadata:

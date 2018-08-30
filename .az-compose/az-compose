@@ -173,7 +173,6 @@ readenv() {
     fi
     eval $name\=\'${value//\'/\'\\\'\'}\'
   done < <(cat "$1" | sed '$a\')
-  IFS=$' \r\n'
 }
 
 since() {
