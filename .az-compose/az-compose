@@ -192,6 +192,17 @@ since() {
   fi
 }
 
+child-processes() {
+  for id in $(pgrep -P $1); do
+    echo $id
+    child-processes $id
+  done
+}
+
+trap 'kill $(child-processes $$) 2>/dev/null; exit 1' USR1
+trap 'kill $(child-processes $$) 2>/dev/null; exit 130' INT
+trap 'kill $(child-processes $$) 2>/dev/null; exit 143' TERM
+
 if [ ! -f ".az-compose/$COMMAND" ]; then
   fatal missing $COMMAND implementation
 fi

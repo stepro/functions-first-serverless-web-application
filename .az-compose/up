@@ -40,11 +40,12 @@ trap 'rm -rf $PROPS' EXIT
 
 NAME_analyzer=analyzer-$(hash cognitiveService/analyzer@$LOCATION)
 create-analyzer() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 1' EXIT
   NAME="$NAME_analyzer"
   echo Creating \'analyzer\' as cognitive service \'$NAME\'...
   START_TIME=$(date +%s)
   STDERR_FILTER=("Microsoft will use ")
-  echo PROP_analyzer_url=$(azp analyzer cognitiveservices account create \
+  URL=$(azp analyzer cognitiveservices account create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -l "$LOCATION" \
@@ -52,12 +53,14 @@ create-analyzer() {
     --sku F0 \
     --yes \
     --query endpoint \
-    -o tsv) >> $PROPS/analyzer
-  echo PROP_analyzer_key=$(azp analyzer cognitiveservices account keys list \
+    -o tsv)
+  echo PROP_analyzer_url="$URL" >> $PROPS/analyzer
+  KEY=$(azp analyzer cognitiveservices account keys list \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     --query key1 \
-    -o tsv) >> $PROPS/analyzer
+    -o tsv)
+  echo PROP_analyzer_key="$KEY" >> $PROPS/analyzer
   echo Created \'analyzer\' as cognitive service \'$NAME\' in $(since $START_TIME)
 }
 
@@ -85,13 +88,14 @@ create-default-functionApp() {
   NAME="$NAME_default_functionApp"
   echo Creating default function app \'$NAME\'...
   START_TIME=$(date +%s)
-  echo PROP_default_functionApp_defaultHostName=$(azp +functionApp functionapp create \
+  DEFAULT_HOST_NAME=$(azp +functionApp functionapp create \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     -c "$LOCATION" \
     -s "$NAME_default_storageAccount" \
     --query defaultHostName \
-    -o tsv) >> $PROPS/default_functionApp
+    -o tsv)
+  echo PROP_default_functionApp_defaultHostName="$DEFAULT_HOST_NAME" >> $PROPS/default_functionApp
   echo Created default function app \'$NAME\' in $(since $START_TIME)
 }
 
@@ -109,12 +113,13 @@ create-default-storageAccount() {
     --sku Standard_LRS \
     --query primaryEndpoints.blob \
     -o tsv)
-  echo PROP_default_storageAccount_primaryEndpoints_blob=$(echo $PRIMARY_ENDPOINTS_BLOB | sed 's/\/$//') >> $PROPS/default_storageAccount
-  echo PROP_default_storageAccount_connectionString=$(azp +storageAccount storage account show-connection-string \
+  echo PROP_default_storageAccount_primaryEndpoints_blob="$(echo $PRIMARY_ENDPOINTS_BLOB | sed 's/\/$//')" >> $PROPS/default_storageAccount
+  CONNECTION_STRING=$(azp +storageAccount storage account show-connection-string \
     -n "$NAME" \
     -g "$RESOURCE_GROUP" \
     --query connectionString \
-    -o tsv) >> $PROPS/default_storageAccount
+    -o tsv)
+  echo PROP_default_storageAccount_connectionString="$CONNECTION_STRING" >> $PROPS/default_storageAccount
   echo Created default storage account \'$NAME\' in $(since $START_TIME)
 }
 
@@ -129,7 +134,7 @@ create-frontend() {
     -g "$RESOURCE_GROUP" \
     --query primaryEndpoints.web \
     -o tsv)
-  echo PROP_frontend_primaryEndpoint=$(echo $PRIMARY_ENDPOINT | sed 's/\/$//') >> $PROPS/frontend
+  echo PROP_frontend_primaryEndpoint="$(echo $PRIMARY_ENDPOINT | sed 's/\/$//')" >> $PROPS/frontend
   echo PROP_frontend_account_connectionString="$PROP_default_storageAccount_connectionString" >> $PROPS/frontend
   echo Created \'frontend\' as static website in storage account \'$NAME_default_storageAccount\' in $(since $START_TIME)
 }
@@ -279,6 +284,8 @@ readenv $PROPS/imageMetadata
 readenv $PROPS/images
 readenv $PROPS/ResizeImage
 readenv $PROPS/thumbnails
+set | grep "^PROP_"
+exit 0
 
 #
 # PHASE 2: CONFIGURE
