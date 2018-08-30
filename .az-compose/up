@@ -66,6 +66,7 @@ create-analyzer() {
 
 NAME_default_cosmosdb=default-$(hash cosmosdb/default@$LOCATION)
 create-default-cosmosdb() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_cosmosdb"
   echo Creating default Cosmos DB database account \'$NAME\'...
   START_TIME=$(date +%s)
@@ -85,6 +86,7 @@ create-default-cosmosdb() {
 
 NAME_default_functionApp=default-$(hash functionApp/default@$LOCATION)
 create-default-functionApp() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_functionApp"
   echo Creating default function app \'$NAME\'...
   START_TIME=$(date +%s)
@@ -101,6 +103,7 @@ create-default-functionApp() {
 
 NAME_default_storageAccount=default$(hash storageAccount/default@$LOCATION)
 create-default-storageAccount() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_storageAccount"
   echo Creating default storage account \'$NAME\'...
   START_TIME=$(date +%s)
@@ -124,6 +127,7 @@ create-default-storageAccount() {
 }
 
 create-frontend() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   echo Creating \'frontend\' as static website in storage account \'$NAME_default_storageAccount\'...
   START_TIME=$(date +%s)
   azp -q frontend storage blob service-properties update \
@@ -141,6 +145,7 @@ create-frontend() {
 
 NAME_GetImages=GetImages
 create-GetImages() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_GetImages"
   echo Creating \'GetImages\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
@@ -151,6 +156,7 @@ create-GetImages() {
 
 NAME_GetUploadUrl=GetUploadUrl
 create-GetUploadUrl() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_GetUploadUrl"
   echo Creating \'GetUploadUrl\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
@@ -162,6 +168,7 @@ create-GetUploadUrl() {
 NAME_imageMetadata=images
 NAME_imageMetadata_database=imagesdb
 create-imageMetadata() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_imageMetadata"
   NAME_database="$NAME_imageMetadata_database"
   NAME_database_account="$NAME_default_cosmosdb"
@@ -200,6 +207,7 @@ create-imageMetadata() {
 
 NAME_images=images
 create-images() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_images"
   echo Creating \'images\' as container \'$NAME\' in storage account \'$NAME_default_storageAccount\'...
   START_TIME=$(date +%s)
@@ -215,6 +223,7 @@ create-images() {
 
 NAME_ResizeImage=ResizeImage
 create-ResizeImage() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_ResizeImage"
   echo Creating \'ResizeImage\' as function \'$NAME\' in function app \'$NAME_default_functionApp\'...
   START_TIME=$(date +%s)
@@ -225,6 +234,7 @@ create-ResizeImage() {
 
 NAME_thumbnails=thumbnails
 create-thumbnails() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_thumbnails"
   echo Creating \'thumbnails\' as container \'$NAME\' in storage account \'$NAME_default_storageAccount\'...
   START_TIME=$(date +%s)
@@ -292,6 +302,7 @@ exit 0
 #
 
 configure-default-functionApp() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_functionApp"
   echo Configuring default function app...
   START_TIME=$(date +%s)
@@ -362,6 +373,7 @@ EOF
 }
 
 configure-default-storageAccount() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_storageAccount"
   echo Configuring default storage account...
   START_TIME=$(date +%s)
@@ -388,6 +400,7 @@ wait
 #
 
 bind-default-functionApp() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_functionApp"
   echo Binding \'GetImages\' function to \'imageMetadata\' Cosmos DB collection...
   echo Binding \'GetUploadUrl\' function to \'images\' storage container...
@@ -418,6 +431,7 @@ bind-default-functionApp() {
 }
 
 bind-frontend() {
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   echo Binding \'frontend\' static website to default function app...
   echo Binding \'frontend\' static website to \'images\' storage container...
   START_TIME=$(date +%s)
