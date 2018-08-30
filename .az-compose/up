@@ -302,7 +302,7 @@ readenv $PROPS/thumbnails
 configure-default-functionApp() {
   trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_functionApp"
-  echo Configuring default function app...
+  echo Configuring default function app \'$NAME\'...
   START_TIME=$(date +%s)
   APP_ID=$(azp +functionApp ad app list \
     --identifier-uri "https://$PROP_default_functionApp_defaultHostName" \
@@ -367,13 +367,13 @@ EOF
     -n web \
     --api-version 2015-06-01 \
     --set properties.cors.allowedOrigins="['"$PROP_frontend_primaryEndpoint"']"
-  echo Configured default function app in $(since $START_TIME)
+  echo Configured default function app \'$NAME\' in $(since $START_TIME)
 }
 
 configure-default-storageAccount() {
   trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_default_storageAccount"
-  echo Configuring default storage account...
+  echo Configuring default storage account \'$NAME\'...
   START_TIME=$(date +%s)
   azp -q +storageAccount storage cors clear \
     --account-name "$NAME" \
@@ -385,7 +385,7 @@ configure-default-storageAccount() {
     --origins "$PROP_frontend_primaryEndpoint" \
     --allowed-headers '*' \
     --exposed-headers '*'
-  echo Configured default storage account in $(since $START_TIME)
+  echo Configured default storage account \'$NAME\' in $(since $START_TIME)
 }
 
 configure-default-functionApp &
