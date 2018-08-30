@@ -17,6 +17,7 @@ if [ -n "$HWD" ]; then
   fi
   cd "$WD"
 fi
+MY_PID=$$
 
 VER=0.1.0
 if [ "$1" == "--version" ]; then
@@ -199,9 +200,9 @@ child-processes() {
   done
 }
 
-trap 'kill $(child-processes $$) 2>/dev/null; exit 1' USR1
-trap 'kill $(child-processes $$) 2>/dev/null; exit 130' INT
-trap 'kill $(child-processes $$) 2>/dev/null; exit 143' TERM
+trap 'kill $(child-processes $MY_PID) 2>/dev/null; exit 1' USR1
+trap 'kill $(child-processes $MY_PID) 2>/dev/null; exit 130' INT
+trap 'kill $(child-processes $MY_PID) 2>/dev/null; exit 143' TERM
 
 if [ ! -f ".az-compose/$COMMAND" ]; then
   fatal missing $COMMAND implementation

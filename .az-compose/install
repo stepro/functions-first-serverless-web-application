@@ -1,6 +1,6 @@
 #!/bin/bash
 mkdir -p ~/bin
-cp .az-compose/az-compose ~/bin
+ln -fs $(cd $(dirname "$0") && pwd -P)/az-compose ~/bin/az-compose
 if [ -z "$(which az-compose)" ]; then
   echo >> ~/.bashrc
   echo 'PATH="$HOME/bin:$HOME/.local/bin:$PATH"' >> ~/.bashrc

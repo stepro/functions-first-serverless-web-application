@@ -40,7 +40,7 @@ trap 'rm -rf $PROPS' EXIT
 
 NAME_analyzer=analyzer-$(hash cognitiveService/analyzer@$LOCATION)
 create-analyzer() {
-  trap '[ "$?" -eq 0 ] || kill -USR1 1' EXIT
+  trap '[ "$?" -eq 0 ] || kill -USR1 $MY_PID' EXIT
   NAME="$NAME_analyzer"
   echo Creating \'analyzer\' as cognitive service \'$NAME\'...
   START_TIME=$(date +%s)
