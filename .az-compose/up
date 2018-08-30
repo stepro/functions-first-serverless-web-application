@@ -294,8 +294,6 @@ readenv $PROPS/imageMetadata
 readenv $PROPS/images
 readenv $PROPS/ResizeImage
 readenv $PROPS/thumbnails
-set | grep "^PROP_"
-exit 0
 
 #
 # PHASE 2: CONFIGURE
