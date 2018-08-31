@@ -4,7 +4,7 @@ services:
       requires:
         +functionApp:
         images:
-          methods: [PUT]
+          methods: [GET, PUT]
       content: www/dist
       settings:
         authEnabled: true
@@ -34,11 +34,9 @@ services:
     storageContainer:
       publicAccess: blob
   analyzer:
-    cognitiveService:
-      kind: ComputerVision
-      pricingTier: F0
+    computerVision:
   imageMetadata:
-    cosmosdbCollection:
+    cosmosDBCollection:
       name: images
       database:
       - name: imagesdb

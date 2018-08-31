@@ -12,7 +12,7 @@ module.exports = function (context, myBlob) {
                     context.done(error);
                 } else {
                     context.log('calling cog svc');
-                    axios.post(process.env.ANALYZER_URL + '/analyze?visualFeatures=Description&language=en', myBlob, {
+                    axios.post(process.env.ANALYZER_ENDPOINT + '/analyze?visualFeatures=Description&language=en', myBlob, {
                         headers: {
                             'Ocp-Apim-Subscription-Key': process.env.ANALYZER_KEY,
                             'Content-Type': 'application/octet-stream'

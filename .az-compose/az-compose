@@ -1,8 +1,5 @@
 #!/bin/bash
 set -e
-if [ -n "$DEBUG" ]; then
-  set -x
-fi
 
 ME="$0"
 ME=$(which "$ME")
@@ -26,7 +23,7 @@ if [ "$1" == "--version" ]; then
 fi
 
 fatal() {
-  echo $ME: >&2 "$@"
+  echo >&2 $ME: "$@"
   exit 1
 }
 
@@ -49,7 +46,7 @@ OPTSTRING=f:g:l:
 LONGOPTS=compose-file:,subscription:,resource-group:,location:
 if [ "$COMMAND" == "up" ]; then
   OPTSTRING=${OPTSTRING}e:
-  LONGOPTS=$LONGOPTS,env:,env-file:
+  LONGOPTS=$LONGOPTS,env-file:,env:
 elif [ "$COMMAND" == "down" ]; then
   OPTSTRING=${OPTSTRING}dy
   LONGOPTS=$LONGOPTS,delete-group,no-wait,yes
@@ -62,8 +59,8 @@ while true; do
        --subscription)   SUBSCRIPTION="$2"; shift;;
     -g|--resource-group) RESOURCE_GROUP="$2"; shift;;
     -l|--location)       LOCATION="$2"; shift;;
-    -e|--env)            ENV+=("$2"); shift;;
        --env-file)       ENV_FILE=("$2"); shift;;
+    -e|--env)            ENV+=("$2"); shift;;
     -d|--delete-group)   DELETE_GROUP=1;;
        --no-wait)        NO_WAIT=--no-wait;;
     -y|--yes)            YES=1;;
@@ -108,7 +105,7 @@ if [ -z "$RG_LOCATION" ]; then
     echo Creating resource group \'$RESOURCE_GROUP\' in location \'$LOCATION\'...
     az group create -n "$RESOURCE_GROUP" -l "$LOCATION" > /dev/null
   fi
-else
+elif [ "$COMMAND" == "up" ]; then
   echo Using existing resource group \'$RESOURCE_GROUP\' and location \'$LOCATION\'
 fi
 

@@ -24,7 +24,7 @@ public static async Task<object> Run(Stream myBlob, string name, Stream thumbnai
 
     var request = new HttpRequestMessage() {
         RequestUri = new Uri(
-            System.Environment.GetEnvironmentVariable("ANALYZER_URL", EnvironmentVariableTarget.Process) + 
+            System.Environment.GetEnvironmentVariable("ANALYZER_ENDPOINT", EnvironmentVariableTarget.Process) + 
             "/analyze?visualFeatures=Description&amp;language=en"),
             Method = HttpMethod.Post,
             Content = new StreamContent(myBlob)
