@@ -19,7 +19,7 @@ services.imageMetadata = azure.cosmosDB.collection({
     throughput: 400
 });
 
-azure.functionApp.default({
+azure.infra.functionApp.default({
     authentication: {
         activeDirectory: {
             appDisplayName: "First Serverless Web Application"
@@ -58,4 +58,4 @@ services.frontend = azure.staticWebsite({
     index: index.html
 });
 
-exports.services = services;
+export { services };
