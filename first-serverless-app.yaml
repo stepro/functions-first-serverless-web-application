@@ -24,19 +24,14 @@ services:
           redirectTo: frontend
       GetImages:
         type: httpFunction
-        requires: imageMetadata!
-        source: csharp/GetImages
+        parameters:
+        - source: imageMetadata
+          query: select * from c order by c._ts desc
       GetUploadUrl:
         type: httpFunction
-        requires: images!
-        source: csharp/GetUploadUrl
     images:
       type: storage.container
       publicAccessLevel: blob
-      triggers:
-        put:
-        - requires: [images!, thumbnails!, analyzer!, imageMetadata!]
-          source: csharp/ResizeImage
     thumbnails:
       type: storage.container
       publicAccessLevel: blob
