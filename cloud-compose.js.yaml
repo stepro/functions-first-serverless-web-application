@@ -1,0 +1,52 @@
+name: first-serverless-app
+imports:
+- azure
+services:
+  myfrontend:
+    type: storage.website
+    requires:
+      backend.GetImages:
+      backend.GetUploadUrl:
+      backend.images:
+        methods: [GET, PUT]
+    content: www/dist
+    settings:
+      authEnabled: true
+    index: index.html
+  backend:
+    services:
+      myfunctions:
+        type: function.app
+        default: true
+        authentication:
+          activeDirectory:
+            appDisplayName: First Serverless Web Application
+          tokenStore: true
+          redirectTo: frontend
+        source: javascript/site
+      GetImages:
+        type: function
+        requires: imageMetadata!
+        source: javascript/GetImages
+      GetUploadUrl:
+        type: function
+        requires: images!
+        source: javascript/GetUploadUrl
+      ResizeImage:
+        type: function
+        requires: [images!, thumbnails!, analyzer!, imageMetadata!]
+        source: javascript/ResizeImage
+      images:
+        type: storage.container
+        publicAccessLevel: blob
+      thumbnails:
+        type: storage.container
+        publicAccessLevel: blob
+      analyzer:
+        type: cognitive.computerVision
+      imageMetadata:
+        type: cosmosDB.collection
+        name: images
+        database:
+        - name: imagesdb
+        throughput: 400
