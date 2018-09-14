@@ -3,20 +3,6 @@ import * as axios from "axios";
 import * as Jimp from "jimp";
 import * as storage from "azure-storage";
 
-azure.storage.account.for(".default").define(account => account.kind = azure.storage.Kind.StorageV2);
-
-azure.storage.account.for("*").default(account => {
-    if (process.env.STAMP == "production") {
-        account.pricingTier = azure.storage.PricingTier.Premium;
-    }
-});
-
-azure.storage.account.for("*").enforce(account => {
-    if (process.env.STAMP == "development") {
-        account.pricingTier = azure.storage.PricingTier.Standard;
-    }
-});
-
 azure.httpFunction("GetImages").handle("GET", (context, documents) => {
     context.response.end(documents);
 });
@@ -76,4 +62,18 @@ azure.storage.container("images").onPut({
             description: response.data.description
         });
     });
+});
+
+azure.storage.account.for(".default").default(account => account.kind = azure.storage.Kind.StorageV2);
+
+azure.storage.account.for("*").default(account => {
+    if (process.env.STAMP == "production") {
+        account.pricingTier = azure.storage.PricingTier.Premium;
+    }
+});
+
+azure.storage.account.for("*").enforce(account => {
+    if (process.env.STAMP == "development") {
+        account.pricingTier = azure.storage.PricingTier.Standard;
+    }
 });

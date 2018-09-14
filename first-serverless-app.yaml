@@ -44,4 +44,4 @@ services:
       - name: imagesdb
       throughput: 400
 scripts:
-- cloud-compose.js
+- first-serverless-app.js
