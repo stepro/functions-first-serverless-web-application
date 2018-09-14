@@ -70,9 +70,9 @@ while true; do
 done
 
 if [ -z "$COMPOSE_FILE" ]; then
-  COMPOSE_FILE=azure-compose.yml
+  COMPOSE_FILE=cloud-compose.yml
   if [ ! -f "$COMPOSE_FILE" ]; then
-    COMPOSE_FILE=azure-compose.yaml
+    COMPOSE_FILE=cloud-compose.yaml
   fi
 fi
 if [ ! -f "$COMPOSE_FILE" ]; then
