@@ -5,15 +5,14 @@ services:
   myfrontend:
     type: storage.website
     requires:
-      backend.GetImages:
-      backend.GetUploadUrl:
-      backend.images:
+      mybackend.myfunctions:
+      mybackend.images:
         methods: [GET, PUT]
     content: www/dist
     settings:
       authEnabled: true
     index: index.html
-  backend:
+  mybackend:
     services:
       myfunctions:
         type: function.app
@@ -22,7 +21,7 @@ services:
           activeDirectory:
             appDisplayName: First Serverless Web Application
           tokenStore: true
-          redirectTo: frontend
+          redirectTo: myfrontend
         source: javascript/site
       GetImages:
         type: function
@@ -43,7 +42,7 @@ services:
         type: storage.container
         publicAccessLevel: blob
       analyzer:
-        type: cognitive.computerVision
+        type: cognitive.vision
       imageMetadata:
         type: cosmosDB.collection
         name: images
