@@ -3,13 +3,13 @@
     <main>
       <app-loader id="initialization-loader" v-show="loading" :text="loaderText" />
       <div v-show="!loading">
-        <app-navigation 
-          :auth="auth" 
+        <app-navigation
+          :auth="auth"
           :upload-enabled="uploadEnabled"
           @display-upload="uploadEnabled = true"
         />
         <app-masthead />
-        <app-upload 
+        <app-upload
           v-show="uploadEnabled"
           @hide-upload="uploadEnabled = false"
           @file-uploading="onFileUploading"
@@ -53,8 +53,8 @@ export default {
         logout: window.auth.logout,
         username: null
       }
-      data.apiBaseUrl = 'https://' + window.settings.default.functionApp.defaultHostName
-      data.blobBaseUrl = window.settings.images.primaryEndpoint
+      data.apiBaseUrl = 'https://' + window.settings.mybackend.myfunctions.defaultHostName
+      data.blobBaseUrl = window.settings.mybackend.images.primaryEndpoint
     }
     return data
   },

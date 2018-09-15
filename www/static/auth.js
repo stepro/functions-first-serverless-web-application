@@ -9,14 +9,14 @@
       history.pushState("", document.title, window.location.pathname + window.location.search)
     }
   }
-  
+
   if (!authToken) {
     authToken = sessionStorage.getItem('authToken')
   }
 
   window.auth = {
     token: authToken,
-    loginUrl: 'https://' + window.settings.default.functionApp.defaultHostName +
+    loginUrl: 'https://' + window.settings.mybackend.myfunctions.defaultHostName +
       '/.auth/login/aad?session_mode=token&post_login_redirect_url=' +
       encodeURIComponent(window.location.href),
     logout: function() {
