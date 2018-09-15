@@ -2,18 +2,18 @@ name: first-serverless-app
 imports:
 - azure
 services:
-  frontend:
+  myfrontend:
     type: storage.website
     requires:
-      backend.GetImages:
-      backend.GetUploadUrl:
-      backend.images:
+      mybackend.GetImages:
+      mybackend.GetUploadUrl:
+      mybackend.images:
         methods: [GET, PUT]
     content: www/dist
     settings:
       authEnabled: true
     index: index.html
-  backend:
+  mybackend:
     services:
       GetImages:
         type: httpFunction
@@ -24,17 +24,17 @@ services:
       GetUploadUrl:
         type: httpFunction
         tags: requiresAuth
-    images:
-      type: storage.container
-      publicAccessLevel: blob
-    thumbnails:
-      type: storage.container
-      publicAccessLevel: blob
-    analyzer:
-      type: cognitive.computerVision
-    imageMetadata:
-      type: cosmosDB.collection
-      name: images
-      database:
-      - name: imagesdb
-      throughput: 400
+      images:
+        type: storage.container
+        publicAccessLevel: blob
+      thumbnails:
+        type: storage.container
+        publicAccessLevel: blob
+      analyzer:
+        type: cognitive.vision
+      imageMetadata:
+        type: cosmosDB.collection
+        name: images
+        database:
+        - name: imagesdb
+        throughput: 400
