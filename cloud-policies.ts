@@ -1,9 +1,10 @@
 // This script-behind would be registered with the compose service
 
+import * as compose from "@cloud-compose/compose";
 import * as azure from "@cloud-compose/azure";
 
-azure.storage.account.for("*").enforce(account => {
-    if (process.env.STAMP != "production") {
-        account.pricingTier = azure.storage.PricingTier.Standard;
-    }
-});
+if (compose.env.STAMP != "production") {
+    azure.storage.account.for("*").enforce(() => ({
+        performance: azure.storage.Performance.standard
+    }));
+}

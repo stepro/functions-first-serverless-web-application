@@ -1,3 +1,4 @@
+import * as compose from "@cloud-compose/compose";
 import * as azure from "@cloud-compose/azure";
 
 azure.httpFunction.for(".requiresAuth").default(f => {
@@ -10,8 +11,8 @@ azure.httpFunction.for(".requiresAuth").default(f => {
     };
 });
 
-azure.storage.account.for("*").default(account => {
-    if (process.env.STAMP == "production") {
-        account.pricingTier = azure.storage.PricingTier.Premium;
-    }
-});
+if (compose.env.STAMP == "production") {
+    azure.storage.account.for("*").default(account => ({
+        performance: azure.storage.Performance.premium
+    }));
+}
