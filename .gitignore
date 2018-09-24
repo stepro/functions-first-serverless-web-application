@@ -75,3 +75,6 @@ jspm_packages
 
 # Nuxt generate
 dist
+
+.terraform
+node_modules
