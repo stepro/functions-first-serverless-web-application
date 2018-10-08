@@ -1,8 +1,0 @@
-#!/bin/bash
-MD=$(cd $(dirname "$0") && pwd -P)
-ME=$(basename $0)
-if [ -n "$1" -a -x "$MD/$ME-$1" ]; then
-  exec "$MD/$ME-$1" "${@:2}"
-else
-  exec $(which -a "$ME" | tail -n1) "$@"
-fi

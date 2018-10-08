@@ -1,4 +1,0 @@
-#!/bin/bash
-cd www
-npm install
-npm run generate
