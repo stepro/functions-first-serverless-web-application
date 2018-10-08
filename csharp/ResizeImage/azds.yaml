@@ -1,0 +1,20 @@
+kind: azure.function
+requires:
+- kind: azure.storage.container
+  name: images
+  env:
+    IMAGES_ACCOUNT_CONNECTION_STRING: $(account.connectionString)
+- kind: azure.storage.container
+  name: thumbnails
+  env:
+    THUMBNAILS_ACCOUNT_CONNECTION_STRING: $(account.connectionString)
+- type: azure.cognitiveservice.vision
+  env:
+    ANALYZER_ENDPOINT: $(endpoint)
+    ANALYZER_KEY: $(key)
+- type: azure.cosmosdb.collection
+  name: images
+  database:
+    name: imagesdb
+  env:
+    IMAGES_DATABASE_ACCOUNT_CONNECTION_STRING: $(database.account.connectionString)

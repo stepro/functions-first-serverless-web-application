@@ -1,0 +1,23 @@
+kind: web.site
+build:
+  commands:
+  - [npm, install]
+  - [npm, run, generate]
+content: dist
+settingsFile: settings.js
+requires:
+- kind: azure.function.app
+  authentication: azureActiveDirectory
+  functions:
+  - path: ../$LANGUAGE/GetImages
+  - path: ../$LANGUAGE/GetUploadUrl
+  settings:
+    apiHostName: $(defaultHostName)
+- kind: azure.storage
+  settings:
+    blobBaseUrl: $(primaryEndpoints.blob)
+---
+kind: azure.storage.container
+name: images
+labels:
+  backend: true

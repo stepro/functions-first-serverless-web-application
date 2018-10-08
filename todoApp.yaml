@@ -1,0 +1,9 @@
+name: todoApp
+components:
+  myfrontend:
+    type: web.server
+    requires:
+      env:
+        MONGO_CONNECTION_STRING: $(mydata.connectionString)
+  mydata:
+    type: data.mongodb

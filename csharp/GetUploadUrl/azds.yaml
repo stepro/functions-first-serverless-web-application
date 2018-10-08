@@ -1,0 +1,67 @@
+name: GetUploadUrl
+kind: azure.function
+requires:
+- path: ./components/images
+  env:
+    IMAGES_ACCOUNT_CONNECTION_STRING: $(account.connectionString)
+---
+name: contoso.storage.container
+kind: azure.storage.container
+publicAccessLevel: blob
+---
+name: thumbnails
+kind: azure.storage.container
+publicAccesslevel: blob
+
+class thumbnails extends azure.storage.container {
+
+}
+
+
+class GetUploadUrl extends azure.function {
+  constructor() : base({requires:....}) {
+
+  }
+}
+
+var x = new getuploadurl();
+
+var y = new getuploadurl();
+
+
+
+name: serverless-app
+kind: type
+members:
+- ./csharp/
+
+class serverless-app {
+  getuploadurl = new azure.function(...)
+}
+
+
+name: publicContainer
+kind: azure.storage.container
+publicAccesslevel: blob
+
+
+
+var Getuploadurl = new azure.function(...);
+
+class publicContainer extends azure.storage.container {
+  constructor() : base({ publicAccesslevel: blob }) {
+  }
+}
+
+var service-b = new KubernetesService();
+
+var images = new publicContainer();
+
+
+class images extends publicContainer {
+
+}
+
+class thumbnails extends publicContainer {
+
+}

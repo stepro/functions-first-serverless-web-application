@@ -1,0 +1,16 @@
+name: todoApp
+components:
+  myfrontend:
+    type: web.server
+    env:
+      MONGO_CONNECTION_STRING: $(mymongo.connectionString)
+  mymongo:
+    type: data.mongodb
+    external:
+      from: 
+      role: todoData
+---
+# com.contoso.mongo.yaml
+name: com.contoso.mongo
+type: data.mongodb
+throughput: 400

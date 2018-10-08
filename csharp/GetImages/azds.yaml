@@ -1,0 +1,8 @@
+kind: azure.function
+requires:
+- kind: azure.cosmosdb.collection
+  name: images
+  database:
+    name: imagesdb
+  env:
+    IMAGES_DATABASE_ACCOUNT_CONNECTION_STRING: $(database.account.connectionString)
