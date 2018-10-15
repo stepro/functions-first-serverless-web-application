@@ -18,12 +18,20 @@ style "azurerm_storage_account" ".secure" {
   enable_https_traffic_only = true
 }
 
-function "azurerm_storage_account_name" {
-  lowered    = "${lower(args[0])}"
+function "canonicalize" "value" {
+  return = "${replace(lower(arg.value), "/[^a-z0-9]/", "")}"
+}
+
+function "azurerm_storage_account_name" "value" {
+  lowered    = "${lower(arg.value)}"
   replaced   = "${replace(self.lowered, "/[^a-z0-9]/", "")}"
   max_length = "${24 - length(random_string.instance.result)}"
   truncated  = "${substr(self.replaced, 0, self.max_length)}"
   return     = "${self.truncated}{random_string.instance.result}"
+}
+
+resource "azurerm_storage_account" "mystorage" {
+  name = "${storage_account_name("mystorage")}"
 }
 
 @ambient

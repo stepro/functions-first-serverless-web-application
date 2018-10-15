@@ -55,7 +55,7 @@ style "azurerm_function_app" "" {
   storage_connection_string = "${azurerm_storage_account.default.primary_connection_string}"
 }
 
-macro "azurerm_function_app_auth_aad" {
+macro "azurerm_function_app" "auth_aad" {
   return {
     authentication {
       active_directory {
