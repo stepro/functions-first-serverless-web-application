@@ -16,7 +16,7 @@
 
   window.auth = {
     token: authToken,
-    loginUrl: 'https://' + window.settings.mybackend.myfunctions.defaultHostName +
+    loginUrl: 'https://' + window.settings.myapi.defaultHostName +
       '/.auth/login/aad?session_mode=token&post_login_redirect_url=' +
       encodeURIComponent(window.location.href),
     logout: function() {

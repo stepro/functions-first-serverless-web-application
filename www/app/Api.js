@@ -1,10 +1,9 @@
 import axios from 'axios'
 
 class Api {
-  constructor(baseUrl, authToken, blobBaseUrl) {
+  constructor(baseUrl, authToken) {
     this.baseUrl = baseUrl
     this.authToken = authToken
-    this.blobBaseUrl = blobBaseUrl
   }
 
   getImages() {
@@ -16,13 +15,7 @@ class Api {
     return axios.get(`${this.baseUrl}/api/GetImages`, config)
       .then(response => {
         if (response.status === 200) {
-          return response.data.map(i => {
-            if (this.blobBaseUrl) {
-              i.imagePath = this.blobBaseUrl + i.imagePath
-              i.thumbnailPath = this.blobBaseUrl + i.thumbnailPath
-            }
-            return i
-          })
+          return response.data
         } else {
           throw response.data
         }

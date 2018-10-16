@@ -3,6 +3,7 @@ using ImageResizer;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Formatting;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json;
 
 static HttpClient httpClient = new HttpClient();
@@ -37,6 +38,8 @@ public static async Task<object> Run(Stream myBlob, string name, Stream thumbnai
     var response = await httpClient.SendAsync(request);
     dynamic result = await response.Content.ReadAsAsync<object>();
 
+    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
+        System.Environment.GetEnvironmentVariable("IMAGES_ACCOUNT_CONNECTION_STRING", EnvironmentVariableTarget.Process));
     return new {
         id = name,
         imgPath = "/images/" + name,

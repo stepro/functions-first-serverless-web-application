@@ -39,7 +39,6 @@ export default {
       initialized: false,
       auth: {},
       apiBaseUrl: '',
-      blobBaseUrl: '',
       api: {},
       uploadEnabled: false,
       fileUploading: false,
@@ -53,8 +52,7 @@ export default {
         logout: window.auth.logout,
         username: null
       }
-      data.apiBaseUrl = 'https://' + window.settings.mybackend.myfunctions.defaultHostName
-      data.blobBaseUrl = window.settings.mybackend.images.primaryEndpoint
+      data.apiBaseUrl = 'https://' + window.settings.myapi.defaultHostName
     }
     return data
   },
@@ -98,7 +96,7 @@ export default {
   },
   mounted() {
     if ((this.backendEnabled && !this.auth.enabled) || this.loggedIn) {
-      this.api = new Api(this.apiBaseUrl, this.auth.token, this.blobBaseUrl)
+      this.api = new Api(this.apiBaseUrl, this.auth.token)
       this.api.getImages().then(images => {
         this.images = images
         this.initialized = true
