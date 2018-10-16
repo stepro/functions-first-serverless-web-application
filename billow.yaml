@@ -1,0 +1,20 @@
+name: gallery-app/www
+type: static-website
+references:
+- name: gallery-app/api
+  settings:
+    file: dist/settings.js
+    substitutions:
+      apiBaseUrl: ${ref.defaultHostName}
+build:
+- npm install
+- npm run generate
+package: dist
+---
+name: gallery-app/api
+type: azure/function-app
+references:
+- name: gallery-app/api
+properties:
+  authentication:
+visibleTo:
