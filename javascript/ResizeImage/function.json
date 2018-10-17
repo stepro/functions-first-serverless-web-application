@@ -1,0 +1,29 @@
+{
+    "bindings": [
+        {
+            "name": "myBlob",
+            "type": "blobTrigger",
+            "direction": "in",
+            "connection": "AZURE_STORAGE_CONNECTION_STRING",
+            "path": "images/{name}",
+            "dataType": "binary"
+        },
+        {
+            "name": "thumbnail",
+            "type": "blob",
+            "direction": "out",
+            "connection": "AZURE_STORAGE_CONNECTION_STRING",
+            "path": "thumbnails/{name}"
+        },
+        {
+            "name": "$return",
+            "type": "documentDB",
+            "direction": "out",
+            "connection": "IMAGE_METADATA_CONNECTION_STRING",
+            "databaseName": "imagesdb",
+            "collectionName": "images",
+            "createIfNotExists": false
+        }
+    ],
+    "disabled": false
+}
