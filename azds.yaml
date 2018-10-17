@@ -1,0 +1,20 @@
+apiVersion: 1.0
+kind: terraform
+build:
+- source: www
+  image: node
+  commands:
+  - npm install
+  - npm run generate
+apply:
+  module: deployment
+  variables:
+    resource_group: $(resourceGroup)
+    default_location: $(location)
+push:
+- type: storage/web-site
+  path: www/dist
+  resource: frontend
+- type: app-service/zip-deploy
+  path: ${LANGUAGE:-csharp}
+  resource: image_api
