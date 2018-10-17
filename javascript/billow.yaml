@@ -1,0 +1,7 @@
+name: gallery-app/api
+type: azure/function-app
+references:
+- name: gallery-app/api
+properties:
+  authentication:
+visibleTo:

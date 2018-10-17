@@ -1,0 +1,1 @@
+window.apiBaseUrl = 'https://${api.defaultHostName}'

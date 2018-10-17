@@ -1,0 +1,4 @@
+name: gallery-app/analyzer
+type: azure/cognitive-service
+properties:
+  kind: ComputerVision

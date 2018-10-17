@@ -1,0 +1,7 @@
+name: gallery-app/image-metadata
+type: azure/cosmosdb
+properties:
+  databases:
+  - name: imagesdb
+    collections:
+    - name: images

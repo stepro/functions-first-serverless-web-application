@@ -1,0 +1,29 @@
+name: gallery-app/frontend
+type: static-website
+build:
+  image: node
+  commands:
+  - npm install
+  - npm run generate
+  package: dist
+deployment:
+  requires:
+    api: ../csharp
+    images: ../images/storage
+  static-website:
+    settings:
+    - file: dist/settings.js
+
+
+
+  ---
+
+name: static-website
+type: abstract
+
+
+
+
+build
+deploy
+up (= build, deploy)

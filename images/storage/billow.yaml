@@ -1,0 +1,10 @@
+name: gallery-app/images
+type: azure/storage
+properties:
+  clients:
+  - component: ../../www
+    service: blob
+    methods: [GET, PUT]
+  containers:
+  - name: images
+  - name: thumbnails

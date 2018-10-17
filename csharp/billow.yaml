@@ -1,0 +1,9 @@
+name: gallery-app/api
+type: azure/function-app
+allows:
+  frontend: ../../www
+requires:
+- name: gallery-app/api
+properties:
+  authentication:
+visibleTo:
