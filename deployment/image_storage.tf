@@ -3,14 +3,12 @@ resource "azurerm_storage_container" "images" {
   container_access_type = "blob"
 }
 
-# resource "azurerm_storage_container" "thumbnails" {
-#     name = "thumbnails"
-#     container_access_type = "blob"
-# }
+resource "azurerm_storage_container" "thumbnails" {
+    name = "thumbnails"
+    container_access_type = "blob"
+}
 
 # resource "azurerm_storage_cors" "default" {
-#   storage_account_name = "${azurerm_storage_account.default.name}"
-
 #   rule {
 #     origins = ["${azurerm_storage_static_website.frontend.primary_endpoint}"]
 #     services = "b"
@@ -20,6 +18,6 @@ resource "azurerm_storage_container" "images" {
 #   }
 # }
 
-output "images" {
+output "image_storage" {
   value = "${azurerm_storage_account.default.primary_blob_endpoint}"
 }

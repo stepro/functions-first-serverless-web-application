@@ -1,3 +1,3 @@
 window.apiBaseUrl = '$apiBaseUrl'
 window.blobBaseUrl = '$blobBaseUrl'
-window.authEnabled = true
+window.authEnabled = false
