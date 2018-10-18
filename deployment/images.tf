@@ -1,32 +1,25 @@
-provider "azurerm" {}
-
 resource "azurerm_storage_container" "images" {
-    name = "images"
-    container_access_type = "blob"
+  name                  = "images"
+  container_access_type = "blob"
 }
 
-resource "azurerm_storage_container" "thumbnails" {
-    name = "thumbnails"
-    container_access_type = "blob"
-}
+# resource "azurerm_storage_container" "thumbnails" {
+#     name = "thumbnails"
+#     container_access_type = "blob"
+# }
 
-resource "null_resource" "images_cors_rules" {
-    provisioner "local-exec" {
-        command = <<EOF
-            az storage cors clear \
-                --account-name ${azurerm_storage_account.default.name} \
-                --services b
-        EOF
-    }
-    provisioner "local-exec" {
-        command = <<EOF
-            az storage cors add \
-                --account-name ${azurerm_storage_account.default.name} \
-                --services b \
-                --methods GET PUT \
-                --origins "${azurerm_storage_account.default.primary_web_endpoint}" \
-                --allowed-headers '*' \
-                --exposed-headers '*'
-        EOF
-    }
+# resource "azurerm_storage_cors" "default" {
+#   storage_account_name = "${azurerm_storage_account.default.name}"
+
+#   rule {
+#     origins = ["${azurerm_storage_static_website.frontend.primary_endpoint}"]
+#     services = "b"
+#     methods = ["GET", "PUT"]
+#     # allowed_headers = ["*"]
+#     # exposed_headers = ["*"]
+#   }
+# }
+
+output "images" {
+  value = "${azurerm_storage_account.default.primary_blob_endpoint}"
 }
