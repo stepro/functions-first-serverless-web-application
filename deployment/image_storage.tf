@@ -4,8 +4,8 @@ resource "azurerm_storage_container" "images" {
 }
 
 resource "azurerm_storage_container" "thumbnails" {
-    name = "thumbnails"
-    container_access_type = "blob"
+  name                  = "thumbnails"
+  container_access_type = "blob"
 }
 
 # resource "azurerm_storage_cors" "default" {
@@ -18,6 +18,3 @@ resource "azurerm_storage_container" "thumbnails" {
 #   }
 # }
 
-output "image_storage" {
-  value = "${azurerm_storage_account.default.primary_blob_endpoint}"
-}

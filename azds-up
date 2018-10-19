@@ -1,0 +1,78 @@
+#!/bin/bash
+set -e
+
+ME=$(which "$0")
+ME=$(basename "$ME")
+MD=$(cd $(dirname "$0") && pwd -P)
+az=$(which az 2>/dev/null || echo az.cmd)
+
+fatal() {
+  echo >&2 $ME: "$@"
+  exit 1
+}
+
+OPTSTRING=g:l:
+LONGOPTS=resource-group:,location:
+ARGS=$(getopt -n $ME -o $OPTSTRING -l $LONGOPTS -- "$@") || exit 1
+eval set -- "$ARGS"
+while true; do
+  case "$1" in
+    -g|--resource-group) RESOURCE_GROUP=$2; shift;;
+    -l|--location)       LOCATION=$2; shift;;
+    --)                  break;;
+  esac
+  shift
+done
+
+if [ -z "$RESOURCE_GROUP" ]; then
+  fatal required option: g, resource-group
+fi
+if [ -z "$LOCATION" ]; then
+  LOCATION=$($az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
+  if [ -z "$LOCATION" ]; then
+    fatal required option: l, location
+  fi
+fi
+
+build0() {
+  cd "$MD/www"
+  npm install
+  npm run generate
+}
+build0 &
+wait
+
+apply() {
+  cd "$MD/deployment"
+  terraform init
+  terraform apply \
+    -var resource_group=$RESOURCE_GROUP \
+    -var default_location=$LOCATION
+}
+apply
+
+push0() {
+  cd "$MD/${LANGUAGE:-csharp}"
+  ZIP_FILE=$(mktemp -u).zip
+  trap 'rm -f $ZIP_FILE' exit
+  gzip -r $ZIP_FILE .
+  az functionapp deployment source config-zip \
+    -n ??
+    -g ??
+    --src images_api.zip \
+    --query message \
+    -o tsv
+}
+
+push1() {
+  cd "$MD/www/dist"
+  az storage blob upload-batch \
+    --account-name ?? \
+    --source . \
+    --destination \$web \
+    --query [].blob \
+    -o tsv
+}
+# push0 &
+# push1 &
+wait

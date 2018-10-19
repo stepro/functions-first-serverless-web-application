@@ -1,0 +1,42 @@
+#!/bin/bash
+
+ME=$(which "$0")
+ME=$(basename "$ME")
+cd $(cd $(dirname "$0") && pwd -P)
+az=$(which az 2>/dev/null || echo az.cmd)
+
+fatal() {
+  echo >&2 $ME: "$@"
+  exit 1
+}
+
+OPTSTRING=g:l:
+LONGOPTS=resource-group:,location:
+ARGS=$(getopt -n $ME -o $OPTSTRING -l $LONGOPTS -- "$@") || exit 1
+eval set -- "$ARGS"
+while true; do
+  case "$1" in
+    -g|--resource-group) RESOURCE_GROUP=$2; shift;;
+    -l|--location)       LOCATION=$2; shift;;
+    --)                  break;;
+  esac
+  shift
+done
+
+if [ -z "$RESOURCE_GROUP" ]; then
+  fatal required option: g, resource-group
+fi
+if [ -z "$LOCATION" ]; then
+  LOCATION=$($az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)
+  if [ -z "$LOCATION" ]; then
+    fatal resource group \'$RESOURCE_GROUP\' not found
+  fi
+fi
+
+destroy() {
+  cd deployment
+  terraform destroy \
+    -var resource_group=$RESOURCE_GROUP \
+    -var default_location=$LOCATION
+}
+destroy
