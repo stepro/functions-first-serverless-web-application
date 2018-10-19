@@ -10,21 +10,19 @@ fatal() {
   exit 1
 }
 
-OPTSTRING=g:l:
-LONGOPTS=resource-group:,location:
-ARGS=$(getopt -n $ME -o $OPTSTRING -l $LONGOPTS -- "$@") || exit 1
+ARGS=$(getopt g:l: "$@") || exit 1
 eval set -- "$ARGS"
 while true; do
   case "$1" in
-    -g|--resource-group) RESOURCE_GROUP=$2; shift;;
-    -l|--location)       LOCATION=$2; shift;;
-    --)                  break;;
+    -g) RESOURCE_GROUP=$2; shift;;
+    -l) LOCATION=$2; shift;;
+    --) break;;
   esac
   shift
 done
 
 if [ -z "$RESOURCE_GROUP" ]; then
-  fatal required option: g, resource-group
+  fatal required option: g
 fi
 if [ -z "$LOCATION" ]; then
   LOCATION=$($az group show -n "$RESOURCE_GROUP" --query location -o tsv 2>/dev/null || echo -n)

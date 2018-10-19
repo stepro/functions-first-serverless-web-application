@@ -150,7 +150,7 @@ resource "null_resource" "azurerm_storage_cors_default" {
   }
 
   provisioner "local-exec" {
-    command = "az storage cors add --account-name ${azurerm_storage_account.default.name} --origins ${substr(data.external.azurerm_storage_account_default_primary_endpoints.result["web"], 0, length(data.external.azurerm_storage_account_default_primary_endpoints.result["web"])-1)} --services b --methods GET PUT --allowed-headers * --exposed-headers *"
+    command = "az storage cors add --account-name ${azurerm_storage_account.default.name} --origins ${substr(data.external.azurerm_storage_account_default_primary_endpoints.result["web"], 0, length(data.external.azurerm_storage_account_default_primary_endpoints.result["web"])-1)} --services b --methods GET PUT --allowed-headers \"*\" --exposed-headers \"*\""
   }
 
   provisioner "local-exec" {
