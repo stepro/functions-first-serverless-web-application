@@ -47,32 +47,71 @@ apply() {
   terraform init
   terraform apply \
     -var resource_group=$RESOURCE_GROUP \
-    -var default_location=$LOCATION
+    -var default_location=$LOCATION \
+    -auto-approve
 }
-apply
+apply &
+wait
+
+valueof() {
+  ADDRESS=$1
+  PROPERTY=$2
+  pushd "$MD/deployment" > /dev/null
+  terraform state show $ADDRESS \
+    | grep ^$PROPERTY\  \
+    | sed 's/^'$PROPERTY'[^=]*= //'
+  popd > /dev/null
+}
+
+output() {
+  PROPERTY=$1
+  pushd "$MD/deployment" > /dev/null
+  terraform output \
+    | grep ^$PROPERTY\  \
+    | sed 's/^'$PROPERTY'[^=]*= //'
+  popd > /dev/null
+}
 
 push0() {
   cd "$MD/${LANGUAGE:-csharp}"
   ZIP_FILE=$(mktemp -u).zip
   trap 'rm -f $ZIP_FILE' exit
-  gzip -r $ZIP_FILE .
-  az functionapp deployment source config-zip \
-    -n ??
-    -g ??
-    --src images_api.zip \
+  zip -r $ZIP_FILE . > /dev/null
+  $az functionapp deployment source config-zip \
+    -n $(valueof azurerm_function_app.image_api name) \
+    -g $(valueof azurerm_function_app.image_api resource_group_name) \
+    --src $ZIP_FILE \
     --query message \
     -o tsv
+  rm -f $ZIP_FILE
 }
+push0 &
+wait
 
 push1() {
   cd "$MD/www/dist"
-  az storage blob upload-batch \
-    --account-name ?? \
+  image_api=$(output image_api)
+  image_storage=$(output image_storage | sed 's/\/$//')
+  sed \
+    -e s/'$image_api'/${image_api//\//\\\/}/g \
+    -e s/'$image_storage'/${image_storage//\//\\\/}/g \
+    settings.template.js > settings.js
+  $az storage blob upload-batch \
+    --account-name $(valueof azurerm_storage_account.default name) \
     --source . \
     --destination \$web \
     --query [].blob \
     -o tsv
 }
-# push0 &
-# push1 &
+push1 &
+wait
+
+end() {
+  echo
+  echo Outputs:
+  echo
+  cd "$MD/deployment"
+  terraform output
+}
+end &
 wait

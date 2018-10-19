@@ -13,7 +13,10 @@ apply:
 push:
 - type: app-service/zip-deploy
   path: ${LANGUAGE:-csharp}
-  resource: image_api
+  resource: azurerm_function_app.image_api
 - type: storage/web-site
   path: www/dist
-  resource: frontend
+  replacements:
+  - file: settings.template.js
+    output: settings.js
+  resource: azurerm_storage_static_website.frontend

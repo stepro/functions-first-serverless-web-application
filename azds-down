@@ -37,6 +37,8 @@ destroy() {
   cd deployment
   terraform destroy \
     -var resource_group=$RESOURCE_GROUP \
-    -var default_location=$LOCATION
+    -var default_location=$LOCATION \
+    -auto-approve
 }
-destroy
+destroy &
+wait
