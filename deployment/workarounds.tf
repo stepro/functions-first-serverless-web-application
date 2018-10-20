@@ -91,8 +91,7 @@ resource "null_resource" "azurerm_function_app_cors_image_api" {
   }
 
   provisioner "local-exec" {
-    # TODO: drop trailing slash from primary_web_endpoint
-    command = "az resource update -g ${azurerm_function_app.image_api.resource_group_name} --namespace Microsoft.Web --parent sites/${azurerm_function_app.image_api.name} --resource-type config -n web --api-version 2015-06-01 --set properties.cors.allowedOrigins=['${substr(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"], 0, length(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"])-1)}']"
+    command = "az resource update -g ${azurerm_function_app.image_api.resource_group_name} --namespace Microsoft.Web --parent sites/${azurerm_function_app.image_api.name} --resource-type config -n web --api-version 2015-06-01 --set properties.cors.allowedOrigins=\"['\"${substr(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"], 0, length(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"])-1)}\"']\""
   }
 
   provisioner "local-exec" {
