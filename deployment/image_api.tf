@@ -22,7 +22,7 @@ resource "azurerm_function_app" "image_api" {
 # resource "azurerm_function_app_cors" "image_api" {
 #   function_app_name = "${azurerm_function_app.image_api.name}"
 #   allowed_origins = [
-#     "${azurerm_storage_static_website.frontend.primary_endpoint}"
+#     "${substr(azurerm_storage_static_website.frontend.primary_endpoint, 0, length(azurerm_storage_static_website.frontend.primary_endpoint)-1)}"
 #   ]
 # }
 

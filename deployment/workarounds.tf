@@ -3,21 +3,6 @@
 #
 
 #
-# _override.tf
-#
-
-data "external" "azurerm_storage_account_default_primary_endpoints" {
-  program = ["az", "storage", "account", "show",
-    "--ids",
-    "${azurerm_storage_account.default.id}",
-    "--query",
-    "primaryEndpoints",
-    "-o",
-    "json",
-  ]
-}
-
-#
 # analyzer.tf
 #
 
@@ -70,6 +55,17 @@ resource "null_resource" "azurerm_storage_static_website_frontend" {
   }
 }
 
+data "external" "azurerm_storage_static_website_frontend" {
+  program = ["az", "storage", "account", "show",
+    "--ids",
+    "${azurerm_storage_account.default.id}${substr(null_resource.azurerm_storage_static_website_frontend.id, 0, 0)}",
+    "--query",
+    "{primaryEndpoint: primaryEndpoints.web}",
+    "-o",
+    "json",
+  ]
+}
+
 #
 # image_api.tf
 #
@@ -96,7 +92,7 @@ resource "null_resource" "azurerm_function_app_cors_image_api" {
 
   provisioner "local-exec" {
     # TODO: drop trailing slash from primary_web_endpoint
-    command = "az resource update -g ${azurerm_function_app.image_api.resource_group_name} --namespace Microsoft.Web --parent sites/${azurerm_function_app.image_api.name} --resource-type config -n web --api-version 2015-06-01 --set properties.cors.allowedOrigins=['${substr(data.external.azurerm_storage_account_default_primary_endpoints.result["web"], 0, length(data.external.azurerm_storage_account_default_primary_endpoints.result["web"])-1)}']"
+    command = "az resource update -g ${azurerm_function_app.image_api.resource_group_name} --namespace Microsoft.Web --parent sites/${azurerm_function_app.image_api.name} --resource-type config -n web --api-version 2015-06-01 --set properties.cors.allowedOrigins=['${substr(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"], 0, length(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"])-1)}']"
   }
 
   provisioner "local-exec" {
@@ -150,7 +146,7 @@ resource "null_resource" "azurerm_storage_cors_default" {
   }
 
   provisioner "local-exec" {
-    command = "az storage cors add --account-name ${azurerm_storage_account.default.name} --origins ${substr(data.external.azurerm_storage_account_default_primary_endpoints.result["web"], 0, length(data.external.azurerm_storage_account_default_primary_endpoints.result["web"])-1)} --services b --methods GET PUT --allowed-headers \"*\" --exposed-headers \"*\""
+    command = "az storage cors add --account-name ${azurerm_storage_account.default.name} --origins ${substr(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"], 0, length(data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"])-1)} --services b --methods GET PUT --allowed-headers '*' --exposed-headers '*'"
   }
 
   provisioner "local-exec" {

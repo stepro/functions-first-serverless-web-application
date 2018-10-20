@@ -7,7 +7,7 @@
 #
 
 output "frontend" {
-  value = "${data.external.azurerm_storage_account_default_primary_endpoints.result["web"]}"
+  value = "${data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"]}"
 }
 
 #
