@@ -85,45 +85,45 @@ resource "azurerm_azuread_application" "image_api" {
   }
 }
 
-resource "null_resource" "azurerm_app_service_authentication_image_api" {
-  triggers = {
-    function_app_name = "${azurerm_function_app.image_api.name}"
-  }
+# resource "null_resource" "azurerm_app_service_authentication_image_api" {
+#   triggers = {
+#     function_app_name = "${azurerm_function_app.image_api.name}"
+#   }
 
-  provisioner "local-exec" {
-    command = <<EOS
-az resource invoke-action \
-  -g ${azurerm_resource_group.default.name} \
-  --namespace Microsoft.Web \
-  --parent "sites/${azurerm_function_app.image_api.name}" \
-  --resource-type config \
-  -n authsettings \
-  --action list \
-  --api-version 2018-02-01 \
-  -o tsv |
-jq '
-  .properties.enabled = true |
-  .properties.runtimeVersion = "1.0.0" |
-  .properties.unauthenticatedClientAction = "RedirectToLoginPage" |
-  .properties.tokenStoreEnabled = true |
-  .properties.allowedExternalRedirectUrls = [ "${data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"]}" ] |
-  .properties.defaultProvider = "AzureActiveDirectory" |
-  .properties.clientId = "${azurerm_azuread_application.image_api.application_id}" |
-  .properties.issuer = "https://sts.windows.net/'$(az account show --query tenantId -o tsv)'/" |
-  .properties.allowedAudiences = [ "https://${azurerm_function_app.image_api.default_hostname}/.auth/login/aad/callback" ]
-' |
-az resource create \
-  -g ${azurerm_resource_group.default.name} \
-  --namespace Microsoft.Web \
-  --parent "sites/${azurerm_function_app.image_api.name}" \
-  --resource-type config \
-  -n authsettings \
-  --api-version 2018-02-01 \
-  --is-full-object \
-  --properties @/dev/stdin
-EOS
-  }
-}
+#   provisioner "local-exec" {
+#     command = <<EOS
+# az resource invoke-action \
+#   -g ${azurerm_resource_group.default.name} \
+#   --namespace Microsoft.Web \
+#   --parent "sites/${azurerm_function_app.image_api.name}" \
+#   --resource-type config \
+#   -n authsettings \
+#   --action list \
+#   --api-version 2018-02-01 \
+#   -o tsv |
+# jq '
+#   .properties.enabled = true |
+#   .properties.runtimeVersion = "1.0.0" |
+#   .properties.unauthenticatedClientAction = "RedirectToLoginPage" |
+#   .properties.tokenStoreEnabled = true |
+#   .properties.allowedExternalRedirectUrls = [ "${data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"]}" ] |
+#   .properties.defaultProvider = "AzureActiveDirectory" |
+#   .properties.clientId = "${azurerm_azuread_application.image_api.application_id}" |
+#   .properties.issuer = "https://sts.windows.net/'$(az account show --query tenantId -o tsv)'/" |
+#   .properties.allowedAudiences = [ "https://${azurerm_function_app.image_api.default_hostname}/.auth/login/aad/callback" ]
+# ' |
+# az resource create \
+#   -g ${azurerm_resource_group.default.name} \
+#   --namespace Microsoft.Web \
+#   --parent "sites/${azurerm_function_app.image_api.name}" \
+#   --resource-type config \
+#   -n authsettings \
+#   --api-version 2018-02-01 \
+#   --is-full-object \
+#   --properties @/dev/stdin
+# EOS
+#   }
+# }
 
 resource "null_resource" "azurerm_function_app_cors_image_api" {
   triggers = {
