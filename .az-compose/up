@@ -416,6 +416,7 @@ bind-mybackend-myfunctions() {
   azp -q mybackend.myfunctions functionapp config appsettings set -n "$NAME" -g "$RESOURCE_GROUP" --settings $ENABLE_BUILD \
     "ANALYZER_ENDPOINT=$PROP_mybackend_analyzer_endpoint" \
     "ANALYZER_KEY=$PROP_mybackend_analyzer_key" \
+    "FUNCTIONS_EXTENSION_VERSION=~1" \
     "IMAGE_METADATA_DATABASE_ACCOUNT_CONNECTION_STRING=$PROP_mybackend_imageMetadata_database_account_connectionString" \
     "IMAGE_METADATA_DATABASE_NAME=$PROP_mybackend_imageMetadata_database_name" \
     "IMAGE_METADATA_NAME=$PROP_mybackend_imageMetadata_name" \
