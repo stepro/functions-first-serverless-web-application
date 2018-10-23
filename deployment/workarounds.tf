@@ -77,7 +77,7 @@ resource "azurerm_azuread_application" "image_api" {
     "https://${azurerm_function_app.image_api.default_hostname}"
   ]
   reply_urls = [
-    "${data.external.azurerm_storage_static_website_frontend.result["primaryEndpoint"]}.auth/login/aad/callback"
+    "https://${azurerm_function_app.image_api.default_hostname}/.auth/login/aad/callback"
   ]
 
   provisioner "local-exec" {
