@@ -1,0 +1,18 @@
+name: gallery-app/api
+type: azure/function-app
+requires:
+  analyzer:
+    type: azure/cognitive-service
+    kind: ComputerVision
+  metadata:
+    type: azure/cosmosdb
+    databases:
+    - name: imagesdb
+      collections:
+      - name: images
+  storage: ../storage
+appSettings:
+  AZURE_STORAGE_CONNECTION_STRING: ${storage.primaryConnectionString}
+  COMP_VISION_KEY: ${analyzer.key}
+  COMP_VISION_URL: ${analyzer.url}
+  IMAGE_METADATA_CONNECTION_STRING: ${metadata.connectionString}

@@ -1,0 +1,5 @@
+name: gallery-app/image-storage
+type: azure/storage-account
+containers:
+- name: images
+- name: thumbnails

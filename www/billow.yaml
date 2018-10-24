@@ -1,0 +1,13 @@
+name: gallery-app/frontend
+type: static-website
+build:
+  using: node
+  commands:
+  - npm install
+  - npm run generate
+  result: dist
+requires:
+  api: ../csharp
+  store: ../storage
+configuration:
+- file: dist/settings.js
