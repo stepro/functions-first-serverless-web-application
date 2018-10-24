@@ -11,6 +11,11 @@ requires:
       collections:
       - name: images
   storage: ../storage
+authentication:
+  activeDirectory:
+    displayName: First Serverless Web Application
+  tokenStore: true
+  redirectTo: ../www
 appSettings:
   AZURE_STORAGE_CONNECTION_STRING: ${storage.primaryConnectionString}
   COMP_VISION_KEY: ${analyzer.key}

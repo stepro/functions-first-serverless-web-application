@@ -5,9 +5,9 @@ build:
   commands:
   - npm install
   - npm run generate
-  result: dist
+  output: dist
 requires:
   api: ../csharp
-  store: ../storage
+  storage: ../storage
 configuration:
 - file: dist/settings.js

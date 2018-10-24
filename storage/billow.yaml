@@ -1,4 +1,4 @@
-name: gallery-app/image-storage
+name: gallery-app/storage
 type: azure/storage-account
 containers:
 - name: images

@@ -9,11 +9,9 @@ author: antchu
 Code for [Build a serverless web app in Azure](https://docs.microsoft.com/en-us/azure/functions/tutorial-static-website-serverless-api-with-database?WT.mc_id=firstserverless-github-antchu) tutorial
 
 
-## Web app installation
+## Build and deploy with Billow
 
 ```
-cd www
-npm install
-npm run generate
+az billow env create gallery-app
+billow run
 ```
-
